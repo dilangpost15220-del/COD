@@ -4,7 +4,113 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Thai ID OCR Pro</title>
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js">/* ===== CAMERA getUserMedia ===== */
+let cameraStream = null;
+let facingMode = 'environment';
+let useFallback = false;
+
+function showCameraStatus(msg) {
+  const el = document.getElementById('cameraStatus');
+  el.textContent = msg;
+  el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 2500);
+}
+
+async function openCamera() {
+  // ลอง getUserMedia ก่อน
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    useFallback = true;
+    document.getElementById('cameraInput').click();
+    return;
+  }
+  const overlay = document.getElementById('cameraOverlay');
+  const video = document.getElementById('cameraVideo');
+  overlay.style.display = 'flex';
+  showCameraStatus('กำลังเปิดกล้อง...');
+  try {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(t => t.stop());
+    }
+    const constraints = {
+      video: {
+        facingMode: { ideal: facingMode },
+        width: { ideal: 1920 },
+        height: { ideal: 1080 }
+      },
+      audio: false
+    };
+    cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
+    video.srcObject = cameraStream;
+    await video.play();
+    showCameraStatus('กล้องพร้อมใช้งาน');
+  } catch (err) {
+    console.error('Camera error:', err);
+    showCameraStatus('ไม่สามารถเปิดกล้อง: ' + err.name);
+    // fallback ไปยัง input file
+    setTimeout(() => {
+      closeCamera();
+      useFallback = true;
+      document.getElementById('cameraInput').click();
+    }, 1200);
+  }
+}
+
+function closeCamera() {
+  const overlay = document.getElementById('cameraOverlay');
+  const video = document.getElementById('cameraVideo');
+  if (cameraStream) {
+    cameraStream.getTracks().forEach(t => t.stop());
+    cameraStream = null;
+  }
+  video.srcObject = null;
+  overlay.style.display = 'none';
+}
+
+function flipCamera() {
+  facingMode = facingMode === 'environment' ? 'user' : 'environment';
+  openCamera();
+}
+
+function snapPhoto() {
+  const video = document.getElementById('cameraVideo');
+  const canvas = document.getElementById('cameraCanvas');
+  if (!video.videoWidth) {
+    showCameraStatus('รอให้กล้องพร้อม...');
+    return;
+  }
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  const ctx = canvas.getContext('2d');
+  // ถ้าใช้กล้องหน้า (user) ต้อง flip กลับ
+  if (facingMode === 'user') {
+    ctx.translate(canvas.width, 0);
+    ctx.scale(-1, 1);
+  }
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+  canvas.toBlob((blob) => {
+    const file = new File([blob], 'camera-capture.jpg', { type: 'image/jpeg' });
+    selectedFile = file;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = document.getElementById('previewImg');
+      img.src = reader.result;
+      img.style.display = 'block';
+      document.getElementById('placeholderIcon').style.display = 'none';
+      document.getElementById('placeholderText').style.display = 'none';
+      document.getElementById('previewArea').classList.add('has-image');
+      closeCamera();
+      toast('ถ่ายรูปสำเร็จ!', 'success');
+    };
+    reader.readAsDataURL(file);
+  }, 'image/jpeg', 0.92);
+}
+
+// ปิดกล้องเมื่อกด Escape
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeCamera();
+});
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Prompt:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -30,13 +136,11 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--border2),transparent);}
 .card-title{font-family:var(--heading);font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
 .card-title span{width:20px;height:20px;background:rgba(79,124,255,0.15);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;}
-.preview-area{height:320px;background:rgba(0,0,0,0.3);border:2px dashed var(--border);border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;overflow:hidden;position:relative;transition:.3s;}
+.preview-area{height:260px;background:rgba(0,0,0,0.3);border:2px dashed var(--border);border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;overflow:hidden;position:relative;transition:.3s;}
 .preview-area.has-image{border-style:solid;border-color:var(--border2);}
-.preview-area img,.preview-area video{width:100%;height:100%;object-fit:contain;display:none;position:absolute;top:0;left:0;border-radius:16px;}
-.preview-area video{object-fit:cover;}
-.placeholder-box{display:flex;flex-direction:column;align-items:center;gap:10px;}
+.preview-area img{width:100%;height:100%;object-fit:contain;display:none;}
 .placeholder-icon{font-size:36px;opacity:.3;}
-.placeholder-text{font-size:14px;color:var(--muted);text-align:center;}
+.placeholder-text{font-size:14px;color:var(--muted);}
 .btn-row{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;}
 .btn{padding:11px 18px;border:none;border-radius:12px;cursor:pointer;font-family:var(--font);font-size:14px;font-weight:600;display:inline-flex;align-items:center;gap:7px;transition:.25s;white-space:nowrap;}
 .btn:hover{transform:translateY(-2px);}
@@ -91,23 +195,13 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .toast.error{border-color:rgba(239,68,68,0.4);}
 @keyframes spin{to{transform:rotate(360deg)}}
 .spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0;}
-.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:10000;align-items:center;justify-content:center;}
-.modal.show{display:flex;}
-.modal-content{background:var(--surface);border:1px solid var(--border2);border-radius:20px;padding:30px;max-width:600px;width:90%;max-height:80vh;overflow-y:auto;}
-.modal-header{font-family:var(--heading);font-size:20px;font-weight:700;margin-bottom:15px;display:flex;align-items:center;justify-content:space-between;}
-.close-modal{font-size:28px;cursor:pointer;color:var(--muted);}
-.close-modal:hover{color:var(--text);}
-.modal-body{line-height:1.8;font-size:14px;color:var(--muted);}
-.modal-body ol{margin-left:20px;margin-top:10px;}
-.modal-body li{margin-bottom:8px;}
-.code-block{background:var(--surface3);padding:12px;border-radius:8px;margin:10px 0;font-family:monospace;font-size:12px;overflow-x:auto;white-space:pre-wrap;word-break:break-all;}
 @media(max-width:900px){
   .main{grid-template-columns:1fr;padding:16px;}
   .header{padding:20px 16px 0;flex-wrap:wrap;}
   .fields-grid{grid-template-columns:1fr;}
-  .preview-area{height:280px;}
 }
 </style>
+<base target="_blank">
 </head>
 <body>
 
@@ -128,24 +222,37 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       <div class="card-title"><span>📷</span> สแกนบัตรประชาชน</div>
 
       <div class="preview-area" id="previewArea">
-        <video id="cameraVideo" autoplay playsinline muted></video>
         <img id="previewImg" alt="ภาพบัตร">
-        <div class="placeholder-box" id="placeholderBox">
-          <div class="placeholder-icon">🪪</div>
-          <div class="placeholder-text">ถ่ายรูปหรือเลือกไฟล์บัตรประชาชน</div>
-        </div>
-        <canvas id="captureCanvas" style="display:none;"></canvas>
+        <div class="placeholder-icon" id="placeholderIcon">🪪</div>
+        <div class="placeholder-text" id="placeholderText">ถ่ายรูปหรือเลือกไฟล์บัตรประชาชน</div>
       </div>
 
+      <!-- hidden inputs — triggered via JS .click() ใช้งานได้ทุก browser & มือถือ -->
+  <!-- CAMERA OVERLAY (getUserMedia) -->
+  <div id="cameraOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:1000;flex-direction:column;align-items:center;justify-content:center;padding:20px;">
+    <div style="position:relative;width:100%;max-width:640px;">
+      <video id="cameraVideo" autoplay playsinline muted style="width:100%;border-radius:16px;background:#000;transform:scaleX(-1);" playsinline webkit-playsinline></video>
+      <canvas id="cameraCanvas" style="display:none;"></canvas>
+      <div style="position:absolute;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:16px;align-items:center;">
+        <button class="btn" style="background:var(--surface3);border:1px solid var(--border);color:var(--text);" onclick="closeCamera()">✕ ปิด</button>
+        <button class="btn" style="width:64px;height:64px;border-radius:50%;background:#fff;border:4px solid rgba(255,255,255,0.3);padding:0;display:flex;align-items:center;justify-content:center;" onclick="snapPhoto()">
+          <div style="width:48px;height:48px;border-radius:50%;background:#ef4444;"></div>
+        </button>
+        <button class="btn" style="background:var(--surface3);border:1px solid var(--border);color:var(--text);" onclick="flipCamera()">🔄 สลับ</button>
+      </div>
+      <div id="cameraStatus" style="position:absolute;top:12px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.6);color:#fff;padding:6px 16px;border-radius:20px;font-size:13px;display:none;"></div>
+    </div>
+  </div>
+      <input id="cameraInput" type="file" accept="image/*" capture="environment" style="display:none">
       <input id="galleryInput" type="file" accept="image/*" style="display:none">
 
       <div class="btn-row">
-        <button class="btn btn-camera" id="cameraBtn" onclick="startCamera()">📸 ถ่ายรูป</button>
+        <button class="btn btn-camera" onclick="openCamera()">📸 ถ่ายรูป</button>
         <button class="btn btn-gallery" onclick="document.getElementById('galleryInput').click()">🖼 คลังภาพ</button>
         <button class="btn btn-clear" onclick="clearImage()">✕ ล้าง</button>
       </div>
       <div class="btn-row">
-        <button class="btn btn-scan" id="scanBtn" onclick="scanOCR()" disabled>🔍 วิเคราะห์บัตร</button>
+        <button class="btn btn-scan" id="scanBtn" onclick="scanOCR()">🔍 วิเคราะห์บัตร</button>
       </div>
 
       <div class="progress-wrap">
@@ -164,7 +271,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
         <div class="section-label">ข้อมูลจากบัตร (OCR)</div>
 
         <div class="field full">
-          <label>ชื่อ-นามสกุล</label>
+          <label>ชื่อลูกค้า (จากบัตร)</label>
           <input type="text" id="f_fullname" placeholder="ยังไม่ได้สแกน">
         </div>
         <div class="field full">
@@ -176,7 +283,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
         <div class="section-label">ข้อมูลเพิ่มเติม</div>
 
         <div class="field full">
-          <label>ผู้รับงาน</label>
+          <label>ชื่อผู้รับงาน</label>
           <input type="text" id="f_assignee" placeholder="ชื่อพนักงาน / หน่วยงาน">
         </div>
         <div class="field">
@@ -222,8 +329,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
         </div>
         <div class="sheet-status" id="sheetStatus"></div>
         <div style="margin-top:10px;font-size:11px;color:var(--muted);line-height:1.8;">
-          💡 สร้าง Google Apps Script → ติดตั้งเป็น Web App → วาง URL ด้านบน<br>
-          <a href="#" onclick="showSetupModal();return false;" style="color:var(--accent);">[ ดูวิธีตั้งค่า ▸]</a>
+          ⚠️ กล้องต้องเปิดผ่าน <strong style="color:var(--text)">https://</strong> เท่านั้น (GitHub Pages / Live Server / ngrok)
         </div>
       </div>
     </div>
@@ -243,253 +349,67 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
 </div>
 
-<!-- Setup Modal -->
-<div class="modal" id="setupModal">
-  <div class="modal-content">
-    <div class="modal-header">
-      <span>วิธีตั้งค่า Google Sheets</span>
-      <span class="close-modal" onclick="closeSetupModal()">&times;</span>
-    </div>
-    <div class="modal-body">
-      <ol>
-        <li>เปิด Google Sheets แล้วสร้างไฟล์ใหม่</li>
-        <li>คลิก <strong>Extensions → Apps Script</strong></li>
-        <li>วางโค้ดด้านล่างแทนที่โค้ดเดิม แล้วกด Save</li>
-        <li>คลิก <strong>Deploy → New deployment → Web app</strong></li>
-        <li>ตั้ง Execute as: <strong>Me</strong> / Who has access: <strong>Anyone</strong></li>
-        <li>คัดลอก URL มาวางในช่อง Web App URL</li>
-      </ol>
-      <div class="code-block" id="appScriptCode">function doPost(e) {
-  try {
-    var data = JSON.parse(e.postData.contents);
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var sheetName = data.sheet || 'Sheet1';
-    var sheet = ss.getSheetByName(sheetName);
-    
-    if (!sheet) sheet = ss.insertSheet(sheetName);
-    
-    if (sheet.getLastRow() === 0) {
-      sheet.appendRow(['ลำดับ','ชื่อผู้รับงาน','ชื่อลูกค้า','ที่อยู่','รหัสไปรษณีย์','เบอร์โทร','จำนวน','หมายเหตุ']);
-      sheet.getRange(1, 1, 1, 8)
-        .setFontWeight('bold')
-        .setBackground('#4f7cff')
-        .setFontColor('#ffffff')
-        .setHorizontalAlignment('center');
-      sheet.setFrozenRows(1);
-    }
-    
-    var seq = sheet.getLastRow();
-    var newRow = sheet.getLastRow() + 1;
-    
-    sheet.getRange(newRow, 5).setNumberFormat('@STRING@');
-    sheet.getRange(newRow, 6).setNumberFormat('@STRING@');
-    
-    sheet.appendRow([
-      seq,
-      data.assignee || '',
-      data.fullname || '',
-      data.address || '',
-      data.postcode || '',
-      formatPhone(data.phone),
-      data.qty || 1,
-      data.note || ''
-    ]);
-    
-    return ContentService
-      .createTextOutput(JSON.stringify({ status: 'ok', row: newRow }))
-      .setMimeType(ContentService.MimeType.JSON);
-      
-  } catch (err) {
-    return ContentService
-      .createTextOutput(JSON.stringify({ status: 'error', message: err.message }))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
-}
-
-function doGet(e) {
-  return ContentService
-    .createTextOutput(JSON.stringify({ status: 'ok', message: 'Thai ID OCR Pro connected' }))
-    .setMimeType(ContentService.MimeType.JSON);
-}
-
-function formatPhone(phone) {
-  if (!phone) return '';
-  var p = String(phone).replace(/\D/g, '');
-  if (p.length === 9) return p.slice(0,2) + '-' + p.slice(2,5) + '-' + p.slice(5);
-  if (p.length === 10) return p.slice(0,3) + '-' + p.slice(3,7) + '-' + p.slice(7);
-  return p;
-}</div>
-      <button class="btn btn-camera" onclick="copyCode()" style="margin-top:10px;">📋 คัดลอกโค้ด</button>
-    </div>
-  </div>
-</div>
-
 <div class="toast" id="toast"></div>
 
 <script>
-// ========== CAMERA SYSTEM ==========
-let cameraStream = null;
 let selectedFile = null;
 let history = JSON.parse(localStorage.getItem('ocr_history') || '[]');
-
-const videoEl = document.getElementById('cameraVideo');
-const imgEl = document.getElementById('previewImg');
-const placeholderEl = document.getElementById('placeholderBox');
-const canvasEl = document.getElementById('captureCanvas');
-const previewArea = document.getElementById('previewArea');
-const cameraBtn = document.getElementById('cameraBtn');
-const scanBtn = document.getElementById('scanBtn');
-
 renderHistory();
 loadConfig();
 
-// เปิดกล้อง
-async function startCamera() {
-  if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
-    toast('⚠️ ต้องใช้ HTTPS หรือ localhost เพื่อเปิดกล้อง\nแนะนำให้ใช้ปุ่ม "🖼 คลังภาพ" แทน', 'error');
-    return;
-  }
-
-  try {
-    document.getElementById('statusText').textContent = 'กำลังเปิดกล้อง...';
-    
-    cameraStream = await navigator.mediaDevices.getUserMedia({ 
-      video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }, 
-      audio: false 
-    });
-    
-    videoEl.srcObject = cameraStream;
-    videoEl.style.display = 'block';
-    imgEl.style.display = 'none';
-    placeholderEl.style.display = 'none';
-    previewArea.classList.add('has-image');
-    
-    cameraBtn.textContent = '📸 จับภาพ';
-    cameraBtn.onclick = capturePhoto;
-    
-    document.getElementById('statusText').textContent = '✅ กล้องพร้อม - จัดวางบัตรแล้วกดจับภาพ';
-    toast('เปิดกล้องสำเร็จ! จัดวางบัตรแล้วกดจับภาพ', 'success');
-    
-  } catch (err) {
-    console.error('Camera Error:', err);
-    let msg = 'เปิดกล้องไม่สำเร็จ: ' + err.message;
-    if (err.name === 'NotAllowedError') msg = '❌ ไม่ได้อนุญาตให้ใช้กล้อง';
-    if (err.name === 'NotFoundError') msg = '❌ ไม่พบกล้องบนอุปกรณ์';
-    
-    document.getElementById('statusText').textContent = '❌ ' + msg;
-    toast(msg + '\nใช้ปุ่ม "🖼 คลังภาพ" แทนได้', 'error');
-    stopCamera();
-  }
+/* IMAGE */
+function loadImage(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  selectedFile = file;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const img = document.getElementById('previewImg');
+    img.src = reader.result; img.style.display = 'block';
+    document.getElementById('placeholderIcon').style.display = 'none';
+    document.getElementById('placeholderText').style.display = 'none';
+    document.getElementById('previewArea').classList.add('has-image');
+  };
+  reader.readAsDataURL(file);
 }
+document.getElementById('cameraInput').addEventListener('change', loadImage);
+document.getElementById('galleryInput').addEventListener('change', loadImage);
 
-// จับภาพจากวิดีโอ
-function capturePhoto() {
-  if (!cameraStream) return;
-  
-  const ctx = canvasEl.getContext('2d');
-  canvasEl.width = videoEl.videoWidth;
-  canvasEl.height = videoEl.videoHeight;
-  ctx.drawImage(videoEl, 0, 0);
-  
-  canvasEl.toBlob(blob => {
-    selectedFile = new File([blob], 'idcard_capture.jpg', { type: 'image/jpeg' });
-    imgEl.src = URL.createObjectURL(blob);
-    imgEl.style.display = 'block';
-    videoEl.style.display = 'none';
-    placeholderEl.style.display = 'none';
-    
-    stopCamera();
-    
-    cameraBtn.textContent = '📸 ถ่ายรูป';
-    cameraBtn.onclick = startCamera;
-    scanBtn.disabled = false;
-    
-    document.getElementById('statusText').textContent = '✅ ถ่ายภาพสำเร็จ - พร้อมวิเคราะห์';
-    toast('ถ่ายภาพสำเร็จ! กดวิเคราะห์บัตร', 'success');
-  }, 'image/jpeg', 0.92);
-}
-
-// ปิดกล้อง
-function stopCamera() {
-  if (cameraStream) {
-    cameraStream.getTracks().forEach(track => track.stop());
-    cameraStream = null;
-  }
-  videoEl.srcObject = null;
-  videoEl.style.display = 'none';
-}
-
-// ล้างภาพ
 function clearImage() {
   selectedFile = null;
-  imgEl.src = ''; 
-  imgEl.style.display = 'none';
-  videoEl.style.display = 'none';
-  placeholderEl.style.display = 'flex';
-  previewArea.classList.remove('has-image');
-  stopCamera();
-  
-  cameraBtn.textContent = '📸 ถ่ายรูป';
-  cameraBtn.onclick = startCamera;
-  scanBtn.disabled = true;
-  
+  const img = document.getElementById('previewImg');
+  img.src = ''; img.style.display = 'none';
+  document.getElementById('placeholderIcon').style.display = '';
+  document.getElementById('placeholderText').style.display = '';
+  document.getElementById('previewArea').classList.remove('has-image');
+  document.getElementById('cameraInput').value = '';
+  document.getElementById('galleryInput').value = '';
   document.getElementById('progressBar').style.width = '0%';
   document.getElementById('statusText').textContent = 'พร้อมทำงาน';
 }
 
-// เลือกไฟล์จากเครื่อง
-document.getElementById('galleryInput').addEventListener('change', (e) => {
-  if (e.target.files[0]) {
-    selectedFile = e.target.files[0];
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      imgEl.src = ev.target.result;
-      imgEl.style.display = 'block';
-      videoEl.style.display = 'none';
-      placeholderEl.style.display = 'none';
-      previewArea.classList.add('has-image');
-      stopCamera();
-      scanBtn.disabled = false;
-      document.getElementById('statusText').textContent = '✅ เลือกภาพแล้ว - พร้อมวิเคราะห์';
-    };
-    reader.readAsDataURL(e.target.files[0]);
-  }
-});
-
-// ========== OCR SYSTEM ==========
+/* OCR */
 async function scanOCR() {
   if (!selectedFile) { toast('กรุณาเลือกหรือถ่ายรูปบัตรก่อน', 'error'); return; }
-  
   const btn = document.getElementById('scanBtn');
   btn.disabled = true;
   btn.innerHTML = '<div class="spinner"></div> กำลังวิเคราะห์...';
-  
   document.getElementById('f_fullname').value = '';
   document.getElementById('f_address').value = '';
-  document.getElementById('f_postcode').value = '';
-  document.getElementById('f_phone').value = '';
   document.getElementById('progressBar').style.width = '0%';
-  
   try {
     const { data: { text } } = await Tesseract.recognize(selectedFile, 'tha+eng', {
       logger: m => {
         if (m.progress) document.getElementById('progressBar').style.width = (m.progress*100)+'%';
-        if (m.status) document.getElementById('statusText').textContent = m.status;
+        if (m.status)   document.getElementById('statusText').textContent = m.status;
       }
     });
-    
-    console.log('OCR Text:', text);
     const r = extractThaiID(text);
-    
     setField('f_fullname', r.fullname);
-    setField('f_address', r.address);
-    if (r.postcode) document.getElementById('f_postcode').value = r.postcode;
-    if (r.phone) document.getElementById('f_phone').value = r.phone;
-    
+    setField('f_address',  r.address);
     document.getElementById('statusText').textContent = '✅ วิเคราะห์สำเร็จ';
     toast('OCR สำเร็จ! ตรวจสอบข้อมูลก่อนบันทึก', 'success');
   } catch(err) {
-    console.error('OCR Error:', err);
     document.getElementById('statusText').textContent = '❌ เกิดข้อผิดพลาด';
     toast('OCR ล้มเหลว: ' + err.message, 'error');
   }
@@ -500,70 +420,38 @@ async function scanOCR() {
 function setField(id, val) {
   const el = document.getElementById(id);
   el.value = val || '';
-  if (val) { 
-    el.classList.add('ocr-highlight'); 
-    setTimeout(() => el.classList.remove('ocr-highlight'), 2500); 
-  }
+  if (val) { el.classList.add('ocr-highlight'); setTimeout(() => el.classList.remove('ocr-highlight'), 2500); }
 }
 
 function extractThaiID(text) {
-  const cleanText = text.replace(/[=~fw)J]/g, ' ').replace(/\s+/g, ' ');
-  const cleanLines = cleanText.split('\n').map(x => x.trim()).filter(x => x !== '');
-  
-  let fullname = '', address = '', postcode = '', phone = '';
-  
-  // หาชื่อ
-  for (let line of cleanLines) {
-    let nameMatch = line.match(/(นาย|นาง|นางสาว)\s+([ก-๙\s]+?)(?:\s+(?:Name|Last name|วันที่|$))/i);
-    if (nameMatch) {
-      fullname = nameMatch[0].replace(/\s+/g, ' ').trim();
-      break;
-    }
+  const lines = text.split('\n').map(x => x.trim()).filter(x => x !== '');
+  let fullname = '', address = '';
+  for (let i = 0; i < lines.length; i++) {
+    let line = lines[i]
+      .replace('ชื่อและชื่อสกุล','').replace('ชื่อตัวและชื่อเอก','')
+      .replace('ชื่อตัว','').replace('Name','').replace('Last name','')
+      .replace('UN','นาง').trim();
+    let thai = line.match(/(นาย|นาง|นางสาว)\s+[ก-๙]+\s+[ก-๙]+/);
+    if (thai) { fullname = thai[0]; break; }
   }
-  
-  if (!fullname) {
-    for (let line of cleanLines) {
-      if (line.includes('Name') && !line.includes('Last name')) {
-        let namePart = line.replace(/Name/i, '').trim();
-        if (namePart.length > 3) {
-          fullname = namePart;
-          break;
-        }
+  for (let i = 0; i < lines.length; i++) {
+    let line = lines[i];
+    if (/\d+\/\d+/.test(line) || line.includes('หมู่')) {
+      let addr = [];
+      for (let j = i; j < i+3; j++) {
+        if (!lines[j]) continue;
+        if (lines[j].includes('2559')||lines[j].includes('Date')||lines[j].includes('วัน')) break;
+        addr.push(lines[j]);
       }
-    }
-  }
-  
-  // หาที่อยู่
-  let addressStart = -1;
-  for (let i = 0; i < cleanLines.length; i++) {
-    let line = cleanLines[i];
-    if (line.includes('หมู่') || line.includes('หมู่ที่') || /\d+\/\d+/.test(line) || line.includes('ถนน') || line.includes('ซอย')) {
-      addressStart = i;
+      address = addr.join(' ').replace(/[=~fw)J]/g,'').replace(/\s+/g,' ').trim();
       break;
     }
   }
-  
-  if (addressStart !== -1) {
-    let addressLines = [];
-    for (let i = addressStart; i < Math.min(addressStart + 4, cleanLines.length); i++) {
-      let line = cleanLines[i];
-      if (line.includes('25') || line.includes('Date') || line.includes('วันออก') || line.includes('วันหมด')) break;
-      if (line.length > 5) addressLines.push(line);
-    }
-    address = addressLines.join(' ').trim();
-  }
-  
-  // หารหัสไปรษณีย์
-  let postcodeMatch = cleanText.match(/\b(\d{5})\b/);
-  if (postcodeMatch) postcode = postcodeMatch[1];
-  
-  // หาเบอร์โทร
-  let phoneMatch = cleanText.match(/(\d{3}[-\s]?\d{3}[-\s]?\d{4})/);
-  if (phoneMatch) phone = formatPhone(phoneMatch[1]);
-  
-  return { fullname: fullname || '', address: address || '', postcode: postcode || '', phone: phone || '' };
+  fullname = fullname.replace(/\bUN\b/g,'นาง').replace(/\s+/g,' ').trim();
+  return { fullname: fullname||'', address: address||'' };
 }
 
+/* PHONE FORMAT */
 function formatPhone(phone) {
   if (!phone) return '';
   let p = String(phone).replace(/\D/g,'');
@@ -572,62 +460,55 @@ function formatPhone(phone) {
   return p;
 }
 
-// ========== GOOGLE SHEETS ==========
+/* SHEETS */
 function saveConfig() {
-  localStorage.setItem('ocr_sheet_url', document.getElementById('sheetUrl').value);
+  localStorage.setItem('ocr_sheet_url',  document.getElementById('sheetUrl').value);
   localStorage.setItem('ocr_sheet_name', document.getElementById('sheetName').value);
 }
-
 function loadConfig() {
-  document.getElementById('sheetUrl').value = localStorage.getItem('ocr_sheet_url') || '';
+  document.getElementById('sheetUrl').value  = localStorage.getItem('ocr_sheet_url')  || '';
   document.getElementById('sheetName').value = localStorage.getItem('ocr_sheet_name') || 'Sheet1';
 }
-
 async function testSheet() {
   const url = document.getElementById('sheetUrl').value.trim();
   if (!url) { showSheetStatus('กรุณากรอก URL ก่อน', false); return; }
   showSheetStatus('กำลังทดสอบ...', null);
   try {
     await fetch(url, { method:'GET', mode:'no-cors' });
-    showSheetStatus('✅ เชื่อมต่อได้ — ลองบันทึกข้อมูลจริง', true);
+    showSheetStatus('✅ เชื่อมต่อได้ — ลองบันทึกข้อมูลจริงเพื่อยืนยัน', true);
   } catch(e) {
     showSheetStatus('❌ เชื่อมต่อไม่ได้: ' + e.message, false);
   }
 }
-
 function showSheetStatus(msg, ok) {
   const el = document.getElementById('sheetStatus');
   el.textContent = msg;
-  el.className = 'sheet-status ' + (ok===true?'sheet-ok':ok===false?'sheet-err':'');
+  el.className = 'sheet-status '+(ok===true?'sheet-ok':ok===false?'sheet-err':'');
   el.style.display = 'block';
 }
 
+/* SUBMIT */
 async function submitToSheet() {
   const url = document.getElementById('sheetUrl').value.trim();
   const payload = {
-    sheet: document.getElementById('sheetName').value || 'Sheet1',
+    sheet:    document.getElementById('sheetName').value || 'Sheet1',
     fullname: document.getElementById('f_fullname').value,
-    address: document.getElementById('f_address').value,
+    address:  document.getElementById('f_address').value,
     assignee: document.getElementById('f_assignee').value,
     postcode: document.getElementById('f_postcode').value,
-    phone: formatPhone(document.getElementById('f_phone').value),
-    qty: document.getElementById('f_qty').value || 1,
-    note: document.getElementById('f_note').value,
+    phone:    formatPhone(document.getElementById('f_phone').value),
+    qty:      document.getElementById('f_qty').value || 1,
+    note:     document.getElementById('f_note').value,
   };
-  
   if (!payload.fullname && !payload.assignee) {
-    toast('กรุณากรอกข้อมูลอย่างน้อย ชื่อลูกค้าหรือผู้รับงาน', 'error'); 
-    return;
+    toast('กรุณากรอกข้อมูลอย่างน้อย ชื่อลูกค้าหรือผู้รับงาน', 'error'); return;
   }
-  
   const btn = document.getElementById('submitBtn');
   document.getElementById('submitIcon').textContent = '';
   document.getElementById('submitLabel').textContent = 'กำลังบันทึก...';
   btn.disabled = true;
   btn.insertAdjacentHTML('afterbegin','<div class="spinner" style="position:absolute;left:20px"></div>');
-  
   const record = { ...payload, time: new Date().toLocaleString('th-TH'), status:'pending' };
-  
   if (url) {
     try {
       await fetch(url, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
@@ -641,30 +522,25 @@ async function submitToSheet() {
     record.status = 'local';
     toast('💾 บันทึกเฉพาะในเครื่อง (ยังไม่ได้ตั้งค่า Sheet URL)', 'success');
   }
-  
   history.unshift(record);
   localStorage.setItem('ocr_history', JSON.stringify(history.slice(0,50)));
   renderHistory();
-  
   btn.querySelector('.spinner')?.remove();
   document.getElementById('submitIcon').textContent = '📤';
   document.getElementById('submitLabel').textContent = 'บันทึกลง Google Sheets';
   btn.disabled = false;
 }
 
-// ========== HISTORY ==========
+/* HISTORY */
 function renderHistory() {
   const el = document.getElementById('historyBody');
   document.getElementById('historyCount').textContent = history.length;
-  if (!history.length) { 
-    el.innerHTML = '<div class="empty-history">ยังไม่มีประวัติการบันทึก</div>'; 
-    return; 
-  }
+  if (!history.length) { el.innerHTML = '<div class="empty-history">ยังไม่มีประวัติการบันทึก</div>'; return; }
   const rows = history.slice(0,20).map(r => {
-    const tag = r.status==='ok' ? '<span class="tag tag-ok">✓ สำเร็จ</span>'
+    const tag = r.status==='ok'    ? '<span class="tag tag-ok">✓ สำเร็จ</span>'
               : r.status==='error' ? '<span class="tag tag-err">✗ ผิดพลาด</span>'
               : r.status==='local' ? '<span class="tag tag-pen">💾 ในเครื่อง</span>'
-              : '<span class="tag tag-pen">⏳ รอ</span>';
+              :                      '<span class="tag tag-pen">⏳ รอ</span>';
     return `<tr>
       <td style="color:var(--muted);font-size:12px">${r.time}</td>
       <td>${r.fullname||'—'}</td><td>${r.assignee||'—'}</td>
@@ -676,44 +552,124 @@ function renderHistory() {
     <thead><tr><th>เวลา</th><th>ชื่อลูกค้า</th><th>ผู้รับงาน</th><th>จำนวน</th><th>เบอร์โทร</th><th>สถานะ</th></tr></thead>
     <tbody>${rows}</tbody></table>`;
 }
-
 function clearHistory() {
   if (!confirm('ลบประวัติทั้งหมด?')) return;
-  history = []; 
-  localStorage.removeItem('ocr_history'); 
-  renderHistory();
+  history = []; localStorage.removeItem('ocr_history'); renderHistory();
 }
 
-// ========== TOAST ==========
+/* TOAST */
 function toast(msg, type='success') {
   const el = document.getElementById('toast');
-  el.innerHTML = `<span>${type==='success'?'✅':'❌'}</span><span>${msg.replace(/\n/g, '<br>')}</span>`;
+  el.innerHTML = `<span>${type==='success'?'✅':'❌'}</span><span>${msg}</span>`;
   el.className = `toast ${type} show`;
   setTimeout(() => el.classList.remove('show'), 3200);
 }
+/* ===== CAMERA getUserMedia ===== */
+let cameraStream = null;
+let facingMode = 'environment';
+let useFallback = false;
 
-// ========== MODAL ==========
-function showSetupModal() {
-  document.getElementById('setupModal').classList.add('show');
-}
-function closeSetupModal() {
-  document.getElementById('setupModal').classList.remove('show');
-}
-function copyCode() {
-  const code = document.getElementById('appScriptCode').textContent;
-  navigator.clipboard.writeText(code).then(() => {
-    toast('คัดลอกโค้ดแล้ว!', 'success');
-  });
-}
-window.onclick = function(event) {
-  const modal = document.getElementById('setupModal');
-  if (event.target === modal) closeSetupModal();
+function showCameraStatus(msg) {
+  const el = document.getElementById('cameraStatus');
+  el.textContent = msg;
+  el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 2500);
 }
 
-// Cleanup
-window.onbeforeunload = function() {
-  stopCamera();
-};
+async function openCamera() {
+  // ลอง getUserMedia ก่อน
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    useFallback = true;
+    document.getElementById('cameraInput').click();
+    return;
+  }
+  const overlay = document.getElementById('cameraOverlay');
+  const video = document.getElementById('cameraVideo');
+  overlay.style.display = 'flex';
+  showCameraStatus('กำลังเปิดกล้อง...');
+  try {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(t => t.stop());
+    }
+    const constraints = {
+      video: {
+        facingMode: { ideal: facingMode },
+        width: { ideal: 1920 },
+        height: { ideal: 1080 }
+      },
+      audio: false
+    };
+    cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
+    video.srcObject = cameraStream;
+    await video.play();
+    showCameraStatus('กล้องพร้อมใช้งาน');
+  } catch (err) {
+    console.error('Camera error:', err);
+    showCameraStatus('ไม่สามารถเปิดกล้อง: ' + err.name);
+    // fallback ไปยัง input file
+    setTimeout(() => {
+      closeCamera();
+      useFallback = true;
+      document.getElementById('cameraInput').click();
+    }, 1200);
+  }
+}
+
+function closeCamera() {
+  const overlay = document.getElementById('cameraOverlay');
+  const video = document.getElementById('cameraVideo');
+  if (cameraStream) {
+    cameraStream.getTracks().forEach(t => t.stop());
+    cameraStream = null;
+  }
+  video.srcObject = null;
+  overlay.style.display = 'none';
+}
+
+function flipCamera() {
+  facingMode = facingMode === 'environment' ? 'user' : 'environment';
+  openCamera();
+}
+
+function snapPhoto() {
+  const video = document.getElementById('cameraVideo');
+  const canvas = document.getElementById('cameraCanvas');
+  if (!video.videoWidth) {
+    showCameraStatus('รอให้กล้องพร้อม...');
+    return;
+  }
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  const ctx = canvas.getContext('2d');
+  // ถ้าใช้กล้องหน้า (user) ต้อง flip กลับ
+  if (facingMode === 'user') {
+    ctx.translate(canvas.width, 0);
+    ctx.scale(-1, 1);
+  }
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+  canvas.toBlob((blob) => {
+    const file = new File([blob], 'camera-capture.jpg', { type: 'image/jpeg' });
+    selectedFile = file;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = document.getElementById('previewImg');
+      img.src = reader.result;
+      img.style.display = 'block';
+      document.getElementById('placeholderIcon').style.display = 'none';
+      document.getElementById('placeholderText').style.display = 'none';
+      document.getElementById('previewArea').classList.add('has-image');
+      closeCamera();
+      toast('ถ่ายรูปสำเร็จ!', 'success');
+    };
+    reader.readAsDataURL(file);
+  }, 'image/jpeg', 0.92);
+}
+
+// ปิดกล้องเมื่อกด Escape
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeCamera();
+});
 </script>
 </body>
 </html>
