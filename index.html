@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>สแกนบัตรประชาชน</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sarabun',sans-serif;background:#f5f4f0;color:#1a1a1a;min-height:100vh}
+.page{max-width:680px;margin:0 auto;padding:2.5rem 1.25rem 4rem}
+.header{text-align:center;margin-bottom:2rem}
+.logo{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#888;margin-bottom:1rem}
+.logo-dot{width:8px;height:8px;background:#1a1a1a;border-radius:50%}
+h1{font-size:clamp(1.6rem,4vw,2.2rem);font-weight:700;letter-spacing:-.03em;color:#1a1a1a;margin-bottom:.4rem}
+.sub{font-size:.95rem;color:#888;font-weight:300}
+.api-section{background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:1rem 1.25rem;margin-bottom:1.25rem}
+.api-label{font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#888;margin-bottom:.5rem}
+.api-row{display:flex;gap:8px}
+.api-input{flex:1;border:1px solid #e5e5e5;border-radius:8px;padding:8px 12px;font-size:.85rem;font-family:'IBM Plex Mono',monospace;color:#1a1a1a;background:#fafafa;outline:none;transition:border-color .2s}
+.api-input:focus{border-color:#1a1a1a}
+.api-save{background:#1a1a1a;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:.85rem;cursor:pointer;white-space:nowrap;transition:opacity .2s}
+.api-save:hover{opacity:.75}
+.api-hint{font-size:.75rem;color:#aaa;margin-top:.4rem}
+.api-hint a{color:#888}
+.drop-zone{border:2px dashed #d5d5d5;border-radius:16px;padding:2.5rem 1.5rem;text-align:center;background:#fff;cursor:pointer;transition:border-color .2s,background .2s}
+.drop-zone:hover,.drop-zone.over{border-color:#1a1a1a;background:#fafafa}
+.dz-icon{font-size:2.5rem;margin-bottom:.75rem}
+.dz-title{font-size:1rem;font-weight:600;margin-bottom:.3rem}
+.dz-sub{font-size:.85rem;color:#888;margin-bottom:1.25rem}
+.btn-row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:9px;font-family:'Sarabun',sans-serif;font-size:.9rem;font-weight:600;cursor:pointer;border:none;transition:all .2s}
+.btn-dark{background:#1a1a1a;color:#fff}
+.btn-dark:hover{background:#333}
+.btn-light{background:transparent;color:#1a1a1a;border:1px solid #d5d5d5}
+.btn-light:hover{border-color:#1a1a1a;background:#f5f5f5}
+.btn-full{width:100%;justify-content:center;margin-top:.75rem;padding:11px}
+.preview-box{display:none;margin-top:1.25rem;border-radius:14px;overflow:hidden;border:1px solid #e5e5e5;position:relative}
+.preview-box.show{display:block}
+#prev-img{width:100%;display:block;max-height:300px;object-fit:contain;background:#111}
+.scan-bar{position:absolute;left:0;right:0;height:3px;background:#1a1a1a;opacity:.5;top:0;animation:scanMove 1.8s ease-in-out infinite;display:none}
+.scan-bar.go{display:block}
+@keyframes scanMove{0%{top:0}50%{top:calc(100% - 3px)}100%{top:0}}
+.loading{display:none;align-items:center;gap:10px;margin-top:1rem;padding:12px 16px;background:#fff;border:1px solid #e5e5e5;border-radius:10px}
+.loading.show{display:flex}
+.spin{width:18px;height:18px;border:2px solid #e5e5e5;border-top-color:#1a1a1a;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-txt{font-size:.875rem;color:#888}
+.err{display:none;align-items:center;gap:8px;margin-top:.75rem;padding:10px 14px;background:#fff5f5;border:1px solid #fcc;border-radius:10px;font-size:.875rem;color:#c00}
+.err.show{display:flex}
+.results{display:none;margin-top:1.25rem}
+.results.show{display:block}
+.sec-label{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#aaa;margin-bottom:.6rem}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+@media(max-width:480px){.cards{grid-template-columns:1fr}}
+.card{background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:14px 16px}
+.card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.card-label{font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#aaa}
+.card-val{font-size:.95rem;font-weight:600;color:#1a1a1a;line-height:1.5}
+.card-val.muted{font-weight:400;color:#aaa;font-style:italic;font-size:.875rem}
+.cp-btn{font-size:.7rem;padding:3px 8px;border-radius:6px;border:1px solid #e5e5e5;background:transparent;color:#aaa;cursor:pointer;font-family:'IBM Plex Mono',monospace;transition:all .2s}
+.cp-btn:hover{border-color:#1a1a1a;color:#1a1a1a}
+.cp-btn.ok{border-color:#22c55e;color:#16a34a}
+.raw-box{background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:14px 16px}
+.raw-text{font-family:'IBM Plex Mono',monospace;font-size:.75rem;color:#888;white-space:pre-wrap;word-break:break-word;max-height:150px;overflow-y:auto;line-height:1.7;margin-top:.4rem}
+.reset-row{text-align:center;margin-top:1rem}
+.raw-text::-webkit-scrollbar{width:3px}
+.raw-text::-webkit-scrollbar-thumb{background:#ddd;border-radius:2px}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <div class="logo"><span class="logo-dot"></span>OCR Scanner</div>
+    <h1>สแกนบัตรประชาชน</h1>
+    <p class="sub">ถ่ายภาพหรืออัปโหลดเพื่อดึงชื่อและที่อยู่อัตโนมัติ</p>
+  </div>
+
+  <div class="api-section">
+    <div class="api-label">🔑 Anthropic API Key</div>
+    <div class="api-row">
+      <input class="api-input" id="api-key" type="password" placeholder="sk-ant-api03-..." autocomplete="off">
+      <button class="api-save" onclick="saveKey()">บันทึก</button>
+    </div>
+    <p class="api-hint">รับ API key ได้ที่ <a href="https://console.anthropic.com/settings/keys" target="_blank">console.anthropic.com</a> &nbsp;·&nbsp; เก็บในเครื่องนี้เท่านั้น</p>
+  </div>
+
+  <div class="drop-zone" id="dz">
+    <div class="dz-icon">🪪</div>
+    <p class="dz-title">วางรูปภาพที่นี่</p>
+    <p class="dz-sub">รองรับ PNG, JPG, WEBP หรือ Ctrl+V วางจากคลิปบอร์ด</p>
+    <div class="btn-row">
+      <button class="btn btn-dark" onclick="document.getElementById('fi').click()">📁 เลือกไฟล์</button>
+      <button class="btn btn-light" onclick="openCam()">📷 ถ่ายรูป</button>
+    </div>
+    <input type="file" id="fi" accept="image/*" style="display:none" onchange="loadFile(event)">
+  </div>
+
+  <div class="preview-box" id="prev-box">
+    <img id="prev-img" alt="preview">
+    <div class="scan-bar" id="scan-bar"></div>
+  </div>
+
+  <div id="analyze-wrap" style="display:none">
+    <button class="btn btn-dark btn-full" onclick="analyze()">🔍 วิเคราะห์ภาพ</button>
+  </div>
+
+  <div class="err" id="err"><span>⚠️</span><span id="err-msg"></span></div>
+
+  <div class="loading" id="loading">
+    <div class="spin"></div>
+    <span class="loading-txt">กำลังวิเคราะห์และถอดข้อความ...</span>
+  </div>
+
+  <div class="results" id="results">
+    <div class="sec-label">ข้อมูลที่พบ</div>
+    <div class="cards">
+      <div class="card">
+        <div class="card-head">
+          <span class="card-label">👤 ชื่อ-นามสกุล (ไทย)</span>
+          <button class="cp-btn" id="cp1" onclick="cp('r-name','cp1')">copy</button>
+        </div>
+        <div class="card-val" id="r-name">—</div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <span class="card-label">🔤 Name (EN)</span>
+          <button class="cp-btn" id="cp2" onclick="cp('r-en','cp2')">copy</button>
+        </div>
+        <div class="card-val" id="r-en">—</div>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:10px">
+      <div class="card-head">
+        <span class="card-label">📍 ที่อยู่</span>
+        <button class="cp-btn" id="cp3" onclick="cp('r-addr','cp3')">copy</button>
+      </div>
+      <div class="card-val" id="r-addr">—</div>
+    </div>
+    <div class="raw-box">
+      <div class="sec-label" style="margin-bottom:0">ข้อความทั้งหมด</div>
+      <div class="raw-text" id="r-raw"></div>
+    </div>
+    <div class="reset-row">
+      <button class="btn btn-light" onclick="reset()">🔄 สแกนใหม่</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Camera -->
+<div id="cam-wrap" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:999;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:16px;padding:1.25rem;width:90%;max-width:480px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem">
+      <span style="font-weight:600;font-size:1rem">📷 ถ่ายรูปบัตร</span>
+      <button onclick="closeCam()" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#888;line-height:1">✕</button>
+    </div>
+    <video id="vid" autoplay playsinline muted style="width:100%;border-radius:10px;display:block;background:#111;max-height:260px;object-fit:cover"></video>
+    <div style="display:flex;gap:8px;justify-content:center;margin-top:.75rem">
+      <button class="btn btn-dark" onclick="snap()">📸 ถ่ายภาพ</button>
+      <button class="btn btn-light" onclick="closeCam()">ยกเลิก</button>
+    </div>
+  </div>
+</div>
+<canvas id="cnv" style="display:none"></canvas>
+
+<script>
+let b64=null,stream=null;
+
+window.addEventListener('DOMContentLoaded',()=>{
+  const k=localStorage.getItem('ant_key');
+  if(k) document.getElementById('api-key').value=k;
+});
+
+function saveKey(){
+  const k=document.getElementById('api-key').value.trim();
+  if(k){localStorage.setItem('ant_key',k);alert('บันทึก API key แล้ว ✓')}
+  else alert('กรุณากรอก API key ก่อน');
+}
+function getKey(){return document.getElementById('api-key').value.trim()||localStorage.getItem('ant_key')||''}
+
+const dz=document.getElementById('dz');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('over')});
+dz.addEventListener('dragleave',()=>dz.classList.remove('over'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('over');const f=e.dataTransfer.files[0];if(f&&f.type.startsWith('image/'))readF(f)});
+window.addEventListener('paste',e=>{for(let it of(e.clipboardData?.items||[])){if(it.type.startsWith('image/')){readF(it.getAsFile());return}}});
+
+function loadFile(e){const f=e.target.files[0];if(f)readF(f)}
+function readF(file){
+  const r=new FileReader();
+  r.onload=e=>{b64=e.target.result.split(',')[1];showPrev(e.target.result)};
+  r.readAsDataURL(file);
+}
+function showPrev(src){
+  document.getElementById('prev-img').src=src;
+  document.getElementById('prev-box').classList.add('show');
+  document.getElementById('analyze-wrap').style.display='block';
+  document.getElementById('results').classList.remove('show');
+  hideErr();
+}
+async function openCam(){
+  try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});document.getElementById('vid').srcObject=stream;document.getElementById('cam-wrap').style.display='flex'}
+  catch(e){showErr('เข้าถึงกล้องไม่ได้: '+e.message)}
+}
+function closeCam(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}document.getElementById('cam-wrap').style.display='none'}
+function snap(){
+  const v=document.getElementById('vid'),c=document.getElementById('cnv');
+  c.width=v.videoWidth;c.height=v.videoHeight;c.getContext('2d').drawImage(v,0,0);
+  const url=c.toDataURL('image/jpeg',.92);b64=url.split(',')[1];showPrev(url);closeCam();
+}
+
+async function analyze(){
+  const key=getKey();
+  if(!key){showErr('กรุณากรอก API key ก่อนครับ');return}
+  if(!b64){showErr('กรุณาเลือกรูปภาพก่อน');return}
+  document.getElementById('analyze-wrap').style.display='none';
+  document.getElementById('scan-bar').classList.add('go');
+  document.getElementById('loading').classList.add('show');
+  document.getElementById('results').classList.remove('show');
+  hideErr();
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key':key,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        messages:[{role:'user',content:[
+          {type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},
+          {type:'text',text:`ดูภาพและถอดข้อความทั้งหมด ตอบเป็น JSON เท่านั้น ห้ามมีข้อความอื่น:\n{"full_name":"ชื่อนามสกุลภาษาไทย หรือ null","full_name_en":"Name Lastname English หรือ null","address":"ที่อยู่เต็ม หรือ null","all_text":"ข้อความทั้งหมดที่อ่านได้"}`}
+        ]}]
+      })
+    });
+    const data=await res.json();
+    document.getElementById('loading').classList.remove('show');
+    document.getElementById('scan-bar').classList.remove('go');
+    if(data.error) throw new Error(data.error.message);
+    const raw=data.content?.find(b=>b.type==='text')?.text||'';
+    let p={};try{const m=raw.match(/\{[\s\S]*\}/);if(m)p=JSON.parse(m[0])}catch{}
+    showResult(p,raw);
+  }catch(e){
+    document.getElementById('loading').classList.remove('show');
+    document.getElementById('scan-bar').classList.remove('go');
+    document.getElementById('analyze-wrap').style.display='block';
+    showErr(e.message);
+  }
+}
+
+function setField(id,val){
+  const el=document.getElementById(id);
+  el.textContent=val||'ไม่พบข้อมูล';
+  el.className='card-val'+(val?'':' muted');
+}
+function showResult(p,raw){
+  setField('r-name',p.full_name);setField('r-en',p.full_name_en);setField('r-addr',p.address);
+  document.getElementById('r-raw').textContent=p.all_text||raw||'—';
+  document.getElementById('results').classList.add('show');
+}
+function cp(id,btnId){
+  const val=document.getElementById(id).textContent;
+  if(!val||val==='ไม่พบข้อมูล')return;
+  navigator.clipboard.writeText(val).then(()=>{
+    const b=document.getElementById(btnId);b.textContent='✓';b.classList.add('ok');
+    setTimeout(()=>{b.textContent='copy';b.classList.remove('ok')},2000);
+  });
+}
+function reset(){
+  b64=null;
+  document.getElementById('prev-box').classList.remove('show');
+  document.getElementById('analyze-wrap').style.display='none';
+  document.getElementById('results').classList.remove('show');
+  document.getElementById('loading').classList.remove('show');
+  document.getElementById('fi').value='';hideErr();
+}
+function showErr(msg){document.getElementById('err-msg').textContent=msg;document.getElementById('err').classList.add('show')}
+function hideErr(){document.getElementById('err').classList.remove('show')}
+</script>
+</body>
+</html>
