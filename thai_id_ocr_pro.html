@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Thai ID OCR Pro</title>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Prompt:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#0a0f1e;
+  --surface:#111827;
+  --surface2:#1a2235;
+  --surface3:#222d42;
+  --border:rgba(99,132,255,0.18);
+  --border2:rgba(99,132,255,0.35);
+  --accent:#4f7cff;
+  --accent2:#7c3aed;
+  --success:#10b981;
+  --warning:#f59e0b;
+  --danger:#ef4444;
+  --text:#e8eaf6;
+  --muted:#8892b0;
+  --font:'Sarabun',sans-serif;
+  --heading:'Prompt',sans-serif;
+}
+body{
+  background:var(--bg);
+  font-family:var(--font);
+  color:var(--text);
+  min-height:100vh;
+  padding:0;
+  overflow-x:hidden;
+}
+/* Animated background */
+body::before{
+  content:'';
+  position:fixed;
+  inset:0;
+  background:
+    radial-gradient(ellipse 80% 50% at 20% 20%,rgba(79,124,255,0.08) 0%,transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 80%,rgba(124,58,237,0.07) 0%,transparent 60%);
+  pointer-events:none;
+  z-index:0;
+}
+
+/* HEADER */
+.header{
+  position:relative;
+  z-index:1;
+  padding:28px 32px 0;
+  display:flex;
+  align-items:center;
+  gap:16px;
+}
+.header-icon{
+  width:52px;height:52px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border-radius:16px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:26px;
+  flex-shrink:0;
+}
+.header-title{font-family:var(--heading);font-size:26px;font-weight:700;letter-spacing:-0.5px;}
+.header-sub{font-size:13px;color:var(--muted);margin-top:2px;}
+.header-badge{
+  margin-left:auto;
+  background:rgba(16,185,129,0.12);
+  border:1px solid rgba(16,185,129,0.3);
+  color:#10b981;
+  font-size:12px;font-weight:600;
+  padding:5px 14px;border-radius:20px;
+  display:flex;align-items:center;gap:6px;
+}
+.dot{width:7px;height:7px;border-radius:50%;background:#10b981;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* MAIN LAYOUT */
+.main{
+  position:relative;z-index:1;
+  padding:24px 32px 32px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:24px;
+  max-width:1400px;
+  margin:0 auto;
+}
+
+/* CARD */
+.card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:20px;
+  padding:22px;
+  position:relative;
+  overflow:hidden;
+}
+.card::before{
+  content:'';
+  position:absolute;
+  top:0;left:0;right:0;
+  height:2px;
+  background:linear-gradient(90deg,transparent,var(--border2),transparent);
+}
+.card-title{
+  font-family:var(--heading);
+  font-size:13px;
+  font-weight:600;
+  color:var(--muted);
+  text-transform:uppercase;
+  letter-spacing:1.5px;
+  margin-bottom:16px;
+  display:flex;align-items:center;gap:8px;
+}
+.card-title span{
+  width:20px;height:20px;
+  background:rgba(79,124,255,0.15);
+  border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;
+}
+
+/* PREVIEW */
+.preview-area{
+  height:260px;
+  background:rgba(0,0,0,0.3);
+  border:2px dashed var(--border);
+  border-radius:16px;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:10px;
+  overflow:hidden;
+  position:relative;
+  transition:.3s;
+}
+.preview-area.has-image{border-style:solid;border-color:var(--border2);}
+.preview-area img{width:100%;height:100%;object-fit:contain;display:none;}
+.placeholder-icon{font-size:36px;opacity:.3;}
+.placeholder-text{font-size:14px;color:var(--muted);}
+
+/* BUTTONS */
+.btn-row{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;}
+.btn{
+  padding:11px 18px;
+  border:none;border-radius:12px;
+  cursor:pointer;
+  font-family:var(--font);
+  font-size:14px;font-weight:600;
+  display:inline-flex;align-items:center;gap:7px;
+  transition:.25s;
+  white-space:nowrap;
+}
+.btn:hover{transform:translateY(-2px);}
+.btn:active{transform:translateY(0);}
+.btn-camera{background:linear-gradient(135deg,#1d4ed8,#2563eb);color:#fff;}
+.btn-gallery{background:linear-gradient(135deg,#6d28d9,#7c3aed);color:#fff;}
+.btn-scan{background:linear-gradient(135deg,#065f46,#059669);color:#fff;flex:1;}
+.btn-clear{background:var(--surface3);color:var(--muted);border:1px solid var(--border);}
+label.btn{display:inline-flex;}
+label.btn input{display:none;}
+
+/* PROGRESS */
+.progress-wrap{margin-top:14px;}
+.progress-track{
+  height:6px;background:rgba(0,0,0,0.4);
+  border-radius:99px;overflow:hidden;
+}
+.progress-bar{
+  height:100%;width:0%;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+  border-radius:99px;
+  transition:.15s;
+}
+.status-text{font-size:12px;color:var(--muted);margin-top:7px;min-height:18px;}
+
+/* FORM FIELDS */
+.fields-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+.field{display:flex;flex-direction:column;gap:5px;}
+.field.full{grid-column:1/-1;}
+.field label{
+  font-size:12px;color:var(--muted);font-weight:600;
+  letter-spacing:.5px;text-transform:uppercase;
+}
+.field input,.field textarea{
+  background:var(--surface3);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:9px 12px;
+  color:var(--text);
+  font-family:var(--font);
+  font-size:15px;
+  outline:none;
+  transition:.2s;
+  width:100%;
+}
+.field input:focus,.field textarea:focus{
+  border-color:var(--accent);
+  background:rgba(79,124,255,0.05);
+  box-shadow:0 0 0 3px rgba(79,124,255,0.12);
+}
+.field textarea{resize:vertical;min-height:60px;}
+.field input::placeholder,.field textarea::placeholder{color:var(--muted);opacity:.5;}
+
+/* OCR RESULT HIGHLIGHT */
+.ocr-highlight{
+  background:rgba(79,124,255,0.1);
+  border-color:rgba(79,124,255,0.4) !important;
+}
+
+/* DIVIDER */
+.divider{
+  grid-column:1/-1;
+  border:none;
+  border-top:1px solid var(--border);
+  margin:2px 0;
+}
+
+/* SECTION LABEL */
+.section-label{
+  grid-column:1/-1;
+  font-size:11px;color:var(--accent);
+  font-weight:600;letter-spacing:1.5px;text-transform:uppercase;
+  display:flex;align-items:center;gap:8px;
+  margin-top:4px;
+}
+.section-label::before,.section-label::after{
+  content:'';flex:1;height:1px;
+  background:linear-gradient(90deg,transparent,var(--border));
+}
+.section-label::after{background:linear-gradient(270deg,transparent,var(--border));}
+
+/* SUBMIT BUTTON */
+.btn-submit{
+  width:100%;
+  padding:14px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border:none;border-radius:14px;
+  color:#fff;font-family:var(--heading);
+  font-size:16px;font-weight:700;
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  margin-top:16px;
+  transition:.25s;
+  letter-spacing:.3px;
+  position:relative;
+  overflow:hidden;
+}
+.btn-submit::before{
+  content:'';
+  position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,0.1),transparent);
+}
+.btn-submit:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(79,124,255,0.35);}
+.btn-submit:active{transform:translateY(0);}
+.btn-submit:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+
+/* SHEET CONFIG */
+.sheet-config{
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:16px;
+  margin-bottom:14px;
+}
+.sheet-row{display:flex;gap:10px;align-items:flex-end;}
+.sheet-row .field{flex:1;}
+.sheet-status{
+  font-size:12px;margin-top:8px;padding:6px 12px;
+  border-radius:8px;display:none;
+}
+.sheet-ok{background:rgba(16,185,129,0.1);color:#10b981;border:1px solid rgba(16,185,129,0.2);}
+.sheet-err{background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.2);}
+
+/* HISTORY TABLE */
+.history-wrap{
+  grid-column:1/-1;
+  margin-top:4px;
+}
+.history-table{
+  width:100%;border-collapse:collapse;font-size:13px;
+}
+.history-table th{
+  text-align:left;padding:8px 12px;
+  color:var(--muted);font-weight:600;
+  border-bottom:1px solid var(--border);
+  font-size:12px;letter-spacing:.5px;text-transform:uppercase;
+}
+.history-table td{
+  padding:9px 12px;
+  border-bottom:1px solid rgba(255,255,255,0.04);
+  vertical-align:middle;
+}
+.history-table tr:last-child td{border-bottom:none;}
+.history-table tr:hover td{background:rgba(255,255,255,0.02);}
+.tag{
+  display:inline-block;padding:3px 10px;border-radius:20px;
+  font-size:11px;font-weight:600;
+}
+.tag-ok{background:rgba(16,185,129,0.12);color:#10b981;}
+.tag-err{background:rgba(239,68,68,0.12);color:#ef4444;}
+.tag-pen{background:rgba(245,158,11,0.12);color:#f59e0b;}
+.empty-history{
+  text-align:center;padding:30px;
+  color:var(--muted);font-size:14px;
+}
+.count-badge{
+  background:rgba(79,124,255,0.15);
+  color:var(--accent);
+  font-size:11px;font-weight:700;
+  padding:2px 8px;border-radius:20px;
+  margin-left:8px;
+}
+
+/* TOAST */
+.toast{
+  position:fixed;bottom:30px;right:30px;
+  background:var(--surface2);
+  border:1px solid var(--border2);
+  border-radius:14px;padding:14px 20px;
+  font-size:14px;font-weight:500;
+  z-index:9999;
+  transform:translateY(80px);opacity:0;
+  transition:.3s cubic-bezier(.34,1.56,.64,1);
+  display:flex;align-items:center;gap:10px;
+  min-width:240px;
+  box-shadow:0 12px 40px rgba(0,0,0,.5);
+}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.success{border-color:rgba(16,185,129,0.4);}
+.toast.error{border-color:rgba(239,68,68,0.4);}
+
+/* SPINNER */
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{
+  width:16px;height:16px;
+  border:2px solid rgba(255,255,255,.2);
+  border-top-color:#fff;
+  border-radius:50%;
+  animation:spin .8s linear infinite;
+  flex-shrink:0;
+}
+
+@media(max-width:900px){
+  .main{grid-template-columns:1fr;padding:16px;}
+  .header{padding:20px 16px 0;flex-wrap:wrap;}
+  .fields-grid{grid-template-columns:1fr;}
+  .history-wrap .card{display:none;}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-icon">🪪</div>
+  <div>
+    <div class="header-title">Thai ID OCR Pro</div>
+    <div class="header-sub">ระบบสแกนบัตรประชาชนและบันทึกข้อมูลอัตโนมัติ</div>
+  </div>
+  <div class="header-badge"><span class="dot"></span> พร้อมทำงาน</div>
+</div>
+
+<div class="main">
+
+  <!-- LEFT: CAMERA + SCAN -->
+  <div>
+    <div class="card">
+      <div class="card-title"><span>📷</span> สแกนบัตรประชาชน</div>
+
+      <div class="preview-area" id="previewArea">
+        <img id="previewImg" alt="ภาพบัตร">
+        <div class="placeholder-icon" id="placeholderIcon">🪪</div>
+        <div class="placeholder-text" id="placeholderText">ถ่ายรูปหรือเลือกไฟล์บัตรประชาชน</div>
+      </div>
+
+      <div class="btn-row">
+        <label class="btn btn-camera">
+          📸 ถ่ายรูป
+          <input id="cameraInput" type="file" accept="image/*" capture="environment">
+        </label>
+        <label class="btn btn-gallery">
+          🖼 คลังภาพ
+          <input id="galleryInput" type="file" accept="image/*">
+        </label>
+        <button class="btn btn-clear" onclick="clearImage()">✕</button>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-scan" onclick="scanOCR()" id="scanBtn">
+          🔍 วิเคราะห์บัตร
+        </button>
+      </div>
+
+      <div class="progress-wrap">
+        <div class="progress-track"><div class="progress-bar" id="progressBar"></div></div>
+        <div class="status-text" id="statusText">พร้อมทำงาน</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: DATA FORM -->
+  <div>
+    <div class="card">
+      <div class="card-title"><span>📋</span> ข้อมูลบัตร & งาน</div>
+
+      <div class="fields-grid">
+
+        <!-- OCR Fields -->
+        <div class="section-label">ข้อมูลจากบัตร (OCR)</div>
+
+        <div class="field full">
+          <label>ชื่อ-นามสกุล</label>
+          <input type="text" id="f_fullname" placeholder="ยังไม่ได้สแกน">
+        </div>
+        <div class="field full">
+          <label>ที่อยู่</label>
+          <textarea id="f_address" placeholder="ยังไม่ได้สแกน" rows="2"></textarea>
+        </div>
+
+        <hr class="divider">
+
+        <!-- Manual Fields -->
+        <div class="section-label">ข้อมูลเพิ่มเติม</div>
+
+        <div class="field full">
+          <label>ผู้รับงาน</label>
+          <input type="text" id="f_assignee" placeholder="ชื่อพนักงาน / หน่วยงาน">
+        </div>
+
+        <div class="field">
+          <label>รหัสไปรษณีย์</label>
+          <input type="text" id="f_postcode" placeholder="10000" maxlength="5" inputmode="numeric">
+        </div>
+
+        <div class="field">
+          <label>เบอร์โทร</label>
+          <input type="tel" id="f_phone" placeholder="0812345678" maxlength="10" inputmode="tel">
+        </div>
+
+        <div class="field">
+          <label>จำนวน (ฉบับ)</label>
+          <input type="number" id="f_qty" placeholder="1" min="1" value="1">
+        </div>
+
+        <div class="field">
+          <label>หมายเหตุ</label>
+          <input type="text" id="f_note" placeholder="ข้อมูลเพิ่มเติม">
+        </div>
+
+      </div>
+
+      <button class="btn-submit" id="submitBtn" onclick="submitToSheet()">
+        <span id="submitIcon">📤</span>
+        <span id="submitLabel">บันทึกลง Google Sheets</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- SHEET CONFIG FULL WIDTH -->
+  <div style="grid-column:1/-1;">
+    <div class="card">
+      <div class="card-title"><span>⚙️</span> ตั้งค่า Google Sheets</div>
+      <div class="sheet-config">
+        <div class="sheet-row">
+          <div class="field" style="flex:2">
+            <label>Google Apps Script Web App URL</label>
+            <input type="url" id="sheetUrl" placeholder="https://script.google.com/macros/s/XXXXXXXX/exec" oninput="saveConfig()">
+          </div>
+          <div class="field">
+            <label>Sheet Name</label>
+            <input type="text" id="sheetName" placeholder="Sheet1" value="Sheet1" oninput="saveConfig()">
+          </div>
+          <button class="btn btn-clear" style="margin-bottom:1px;" onclick="testSheet()">🔗 ทดสอบ</button>
+        </div>
+        <div class="sheet-status" id="sheetStatus"></div>
+        <div style="margin-top:10px;font-size:11px;color:var(--muted);line-height:1.7;">
+          💡 สร้าง Google Apps Script → ติดตั้งเป็น Web App → วาง URL ด้านบน
+          <a href="#" onclick="showHelp();return false;" style="color:var(--accent);text-decoration:none;"> ดูวิธีตั้งค่า ▸</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="history-wrap">
+    <div class="card">
+      <div class="card-title">
+        <span>📊</span> ประวัติการบันทึก
+        <span class="count-badge" id="historyCount">0</span>
+        <button class="btn btn-clear" style="margin-left:auto;padding:5px 12px;font-size:12px;" onclick="clearHistory()">ล้าง</button>
+      </div>
+      <div id="historyBody">
+        <div class="empty-history">ยังไม่มีประวัติการบันทึก</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- HELP MODAL (faux fixed) -->
+<div id="helpOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
+  <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:20px;padding:28px;max-width:540px;width:90%;position:relative;">
+    <button onclick="document.getElementById('helpOverlay').style.display='none'" style="position:absolute;top:16px;right:16px;background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;">✕</button>
+    <div style="font-family:var(--heading);font-size:18px;font-weight:700;margin-bottom:16px;">วิธีตั้งค่า Google Sheets</div>
+    <ol style="padding-left:20px;line-height:2.2;font-size:14px;color:var(--muted);">
+      <li>เปิด <strong style="color:var(--text)">Google Sheets</strong> แล้วสร้างไฟล์ใหม่</li>
+      <li>คลิก <strong style="color:var(--text)">Extensions → Apps Script</strong></li>
+      <li>วางโค้ดด้านล่างแทนที่โค้ดเดิม แล้วกด Save</li>
+      <li>คลิก <strong style="color:var(--text)">Deploy → New deployment → Web app</strong></li>
+      <li>ตั้ง Execute as: <strong style="color:var(--text)">Me</strong> / Who has access: <strong style="color:var(--text)">Anyone</strong></li>
+      <li>คัดลอก URL มาวางในช่อง Web App URL</li>
+    </ol>
+    <pre id="gasCode" style="background:rgba(0,0,0,.4);border:1px solid var(--border);border-radius:10px;padding:14px;font-size:11px;overflow:auto;max-height:200px;margin-top:12px;color:#a5f3fc;line-height:1.6;"></pre>
+    <button onclick="copyGas()" style="margin-top:12px;padding:9px 18px;background:var(--accent);border:none;border-radius:10px;color:#fff;font-family:var(--font);font-size:14px;cursor:pointer;">📋 คัดลอกโค้ด</button>
+  </div>
+</div>
+
+<script>
+
+/* ─── GAS CODE TEMPLATE ─── */
+const GAS_CODE = `function doPost(e) {
+  var data = JSON.parse(e.postData.contents);
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(data.sheet || 'Sheet1');
+  if (!sheet) sheet = ss.insertSheet(data.sheet || 'Sheet1');
+  
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow([
+      'เวลาบันทึก','ชื่อ-นามสกุล','ที่อยู่',
+      'ผู้รับงาน','รหัสไปรษณีย์','เบอร์โทร',
+      'จำนวน(ฉบับ)','หมายเหตุ'
+    ]);
+    sheet.getRange(1,1,1,8).setFontWeight('bold')
+      .setBackground('#4f7cff').setFontColor('#ffffff');
+  }
+  
+  sheet.appendRow([
+    new Date().toLocaleString('th-TH'),
+    data.fullname, data.address,
+    data.assignee, data.postcode,
+    data.phone, data.qty, data.note
+  ]);
+  
+  return ContentService
+    .createTextOutput(JSON.stringify({status:'ok'}))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function doGet(e) {
+  return ContentService
+    .createTextOutput(JSON.stringify({status:'ok',message:'Thai ID OCR Pro connected'}))
+    .setMimeType(ContentService.MimeType.JSON);
+}`;
+
+document.getElementById('gasCode').textContent = GAS_CODE;
+
+/* ─── STATE ─── */
+let selectedFile = null;
+let history = JSON.parse(localStorage.getItem('ocr_history') || '[]');
+renderHistory();
+loadConfig();
+
+/* ─── IMAGE LOADING ─── */
+function loadImage(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  selectedFile = file;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const img = document.getElementById('previewImg');
+    img.src = reader.result;
+    img.style.display = 'block';
+    document.getElementById('placeholderIcon').style.display = 'none';
+    document.getElementById('placeholderText').style.display = 'none';
+    document.getElementById('previewArea').classList.add('has-image');
+  };
+  reader.readAsDataURL(file);
+}
+document.getElementById('cameraInput').addEventListener('change', loadImage);
+document.getElementById('galleryInput').addEventListener('change', loadImage);
+
+function clearImage() {
+  selectedFile = null;
+  const img = document.getElementById('previewImg');
+  img.src = ''; img.style.display = 'none';
+  document.getElementById('placeholderIcon').style.display = '';
+  document.getElementById('placeholderText').style.display = '';
+  document.getElementById('previewArea').classList.remove('has-image');
+  document.getElementById('cameraInput').value = '';
+  document.getElementById('galleryInput').value = '';
+}
+
+/* ─── OCR ─── */
+async function scanOCR() {
+  if (!selectedFile) { toast('กรุณาเลือกหรือถ่ายรูปบัตรก่อน', 'error'); return; }
+  const btn = document.getElementById('scanBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div> กำลังวิเคราะห์...';
+
+  document.getElementById('f_fullname').value = '';
+  document.getElementById('f_address').value = '';
+  document.getElementById('progressBar').style.width = '0%';
+
+  try {
+    const { data: { text } } = await Tesseract.recognize(selectedFile, 'tha+eng', {
+      logger: m => {
+        if (m.progress) document.getElementById('progressBar').style.width = (m.progress * 100) + '%';
+        if (m.status) document.getElementById('statusText').textContent = m.status;
+      }
+    });
+
+    const result = extractThaiID(text);
+    setField('f_fullname', result.fullname);
+    setField('f_address', result.address);
+    document.getElementById('statusText').textContent = '✅ วิเคราะห์สำเร็จ';
+    toast('OCR สำเร็จ! ตรวจสอบข้อมูลก่อนบันทึก', 'success');
+  } catch (err) {
+    document.getElementById('statusText').textContent = '❌ เกิดข้อผิดพลาด';
+    toast('OCR ล้มเหลว: ' + err.message, 'error');
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '🔍 วิเคราะห์บัตร';
+}
+
+function setField(id, val) {
+  const el = document.getElementById(id);
+  el.value = val === 'ไม่พบข้อมูล' ? '' : val;
+  if (val && val !== 'ไม่พบข้อมูล') {
+    el.classList.add('ocr-highlight');
+    setTimeout(() => el.classList.remove('ocr-highlight'), 2500);
+  }
+}
+
+/* ─── EXTRACT ─── */
+function extractThaiID(text) {
+  const lines = text.split('\n').map(x => x.trim()).filter(x => x !== '');
+  let fullname = '', address = '';
+
+  for (let i = 0; i < lines.length; i++) {
+    let line = lines[i]
+      .replace('ชื่อและชื่อสกุล', '').replace('ชื่อตัวและชื่อเอก', '')
+      .replace('ชื่อตัว', '').replace('Name', '').replace('Last name', '')
+      .replace('UN', 'นาง').trim();
+    let thai = line.match(/(นาย|นาง|นางสาว)\s+[ก-๙]+\s+[ก-๙]+/);
+    if (thai) { fullname = thai[0]; break; }
+    if (line.includes('บุญยั่ง') || line.includes('โลเปซ')) { fullname = line; break; }
+  }
+
+  for (let i = 0; i < lines.length; i++) {
+    let line = lines[i];
+    if (/\d+\/\d+/.test(line) || line.includes('หมู่')) {
+      let addr = [];
+      for (let j = i; j < i + 3; j++) {
+        if (!lines[j]) continue;
+        if (lines[j].includes('2559') || lines[j].includes('Date') || lines[j].includes('วัน')) break;
+        addr.push(lines[j]);
+      }
+      address = addr.join(' ').replace(/[=~fw)J]/g, '').replace(/\s+/g, ' ').trim();
+      break;
+    }
+  }
+
+  fullname = fullname.replace(/\bUN\b/g, 'นาง').replace(/\s+/g, ' ').trim();
+  return {
+    fullname: fullname || '',
+    address: address || ''
+  };
+}
+
+/* ─── SHEETS CONFIG ─── */
+function saveConfig() {
+  localStorage.setItem('ocr_sheet_url', document.getElementById('sheetUrl').value);
+  localStorage.setItem('ocr_sheet_name', document.getElementById('sheetName').value);
+}
+function loadConfig() {
+  document.getElementById('sheetUrl').value = localStorage.getItem('ocr_sheet_url') || '';
+  document.getElementById('sheetName').value = localStorage.getItem('ocr_sheet_name') || 'Sheet1';
+}
+
+async function testSheet() {
+  const url = document.getElementById('sheetUrl').value.trim();
+  if (!url) { showSheetStatus('กรุณากรอก URL ก่อน', false); return; }
+  showSheetStatus('กำลังทดสอบ...', null);
+  try {
+    const res = await fetch(url, { method: 'GET', mode: 'no-cors' });
+    showSheetStatus('✅ เชื่อมต่อได้ (no-cors mode) — ลองบันทึกข้อมูลจริงเพื่อยืนยัน', true);
+  } catch (e) {
+    showSheetStatus('❌ เชื่อมต่อไม่ได้: ' + e.message, false);
+  }
+}
+function showSheetStatus(msg, ok) {
+  const el = document.getElementById('sheetStatus');
+  el.textContent = msg;
+  el.className = 'sheet-status ' + (ok === true ? 'sheet-ok' : ok === false ? 'sheet-err' : '');
+  el.style.display = 'block';
+}
+
+/* ─── SUBMIT ─── */
+async function submitToSheet() {
+  const url = document.getElementById('sheetUrl').value.trim();
+  const payload = {
+    sheet: document.getElementById('sheetName').value || 'Sheet1',
+    fullname: document.getElementById('f_fullname').value,
+    address: document.getElementById('f_address').value,
+    assignee: document.getElementById('f_assignee').value,
+    postcode: document.getElementById('f_postcode').value,
+    phone: document.getElementById('f_phone').value,
+    qty: document.getElementById('f_qty').value,
+    note: document.getElementById('f_note').value,
+  };
+
+  if (!payload.fullname && !payload.assignee) {
+    toast('กรุณากรอกข้อมูลอย่างน้อย ชื่อหรือผู้รับงาน', 'error'); return;
+  }
+
+  const btn = document.getElementById('submitBtn');
+  document.getElementById('submitIcon').textContent = '';
+  document.getElementById('submitLabel').textContent = 'กำลังบันทึก...';
+  btn.disabled = true;
+  btn.insertAdjacentHTML('afterbegin', '<div class="spinner" style="position:absolute;left:20px"></div>');
+
+  const record = { ...payload, time: new Date().toLocaleString('th-TH'), status: 'pending' };
+
+  if (url) {
+    try {
+      await fetch(url, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      record.status = 'ok';
+      toast('✅ บันทึกลง Google Sheets สำเร็จ!', 'success');
+    } catch (e) {
+      record.status = 'error';
+      toast('❌ บันทึกไม่สำเร็จ: ' + e.message, 'error');
+    }
+  } else {
+    record.status = 'local';
+    toast('💾 บันทึกเฉพาะในเครื่อง (ยังไม่ได้ตั้งค่า Sheet)', 'success');
+  }
+
+  history.unshift(record);
+  localStorage.setItem('ocr_history', JSON.stringify(history.slice(0, 50)));
+  renderHistory();
+
+  btn.querySelector('.spinner')?.remove();
+  document.getElementById('submitIcon').textContent = '📤';
+  document.getElementById('submitLabel').textContent = 'บันทึกลง Google Sheets';
+  btn.disabled = false;
+}
+
+/* ─── HISTORY ─── */
+function renderHistory() {
+  const el = document.getElementById('historyBody');
+  document.getElementById('historyCount').textContent = history.length;
+  if (!history.length) {
+    el.innerHTML = '<div class="empty-history">ยังไม่มีประวัติการบันทึก</div>'; return;
+  }
+  const rows = history.slice(0, 20).map(r => {
+    const tag = r.status === 'ok' ? '<span class="tag tag-ok">✓ สำเร็จ</span>'
+      : r.status === 'error' ? '<span class="tag tag-err">✗ ผิดพลาด</span>'
+      : r.status === 'local' ? '<span class="tag tag-pen">💾 ในเครื่อง</span>'
+      : '<span class="tag tag-pen">⏳ รอ</span>';
+    return `<tr>
+      <td style="color:var(--muted);font-size:12px">${r.time}</td>
+      <td>${r.fullname || '—'}</td>
+      <td>${r.assignee || '—'}</td>
+      <td style="text-align:center">${r.qty || '1'}</td>
+      <td>${r.phone || '—'}</td>
+      <td>${tag}</td>
+    </tr>`;
+  }).join('');
+  el.innerHTML = `<table class="history-table">
+    <thead><tr>
+      <th>เวลา</th><th>ชื่อ</th><th>ผู้รับงาน</th><th>จำนวน</th><th>เบอร์โทร</th><th>สถานะ</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+function clearHistory() {
+  if (!confirm('ลบประวัติทั้งหมด?')) return;
+  history = [];
+  localStorage.removeItem('ocr_history');
+  renderHistory();
+}
+
+/* ─── TOAST ─── */
+function toast(msg, type = 'success') {
+  const el = document.getElementById('toast');
+  const icon = type === 'success' ? '✅' : '❌';
+  el.innerHTML = `<span>${icon}</span><span>${msg}</span>`;
+  el.className = `toast ${type} show`;
+  setTimeout(() => el.classList.remove('show'), 3200);
+}
+
+/* ─── HELP ─── */
+function showHelp() {
+  document.getElementById('helpOverlay').style.display = 'flex';
+}
+function copyGas() {
+  navigator.clipboard.writeText(GAS_CODE).then(() => toast('คัดลอกโค้ดแล้ว!', 'success'));
+}
+</script>
+</body>
+</html>
