@@ -30,11 +30,12 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--border2),transparent);}
 .card-title{font-family:var(--heading);font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
 .card-title span{width:20px;height:20px;background:rgba(79,124,255,0.15);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;}
-.preview-area{height:260px;background:rgba(0,0,0,0.3);border:2px dashed var(--border);border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;overflow:hidden;position:relative;transition:.3s;}
+.preview-area{height:320px;background:rgba(0,0,0,0.3);border:2px dashed var(--border);border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;overflow:hidden;position:relative;transition:.3s;}
 .preview-area.has-image{border-style:solid;border-color:var(--border2);}
 .preview-area img{width:100%;height:100%;object-fit:contain;display:none;}
+.preview-area video{width:100%;height:100%;object-fit:cover;display:none;border-radius:16px;}
 .placeholder-icon{font-size:36px;opacity:.3;}
-.placeholder-text{font-size:14px;color:var(--muted);}
+.placeholder-text{font-size:14px;color:var(--muted);text-align:center;padding:0 20px;}
 .btn-row{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;}
 .btn{padding:11px 18px;border:none;border-radius:12px;cursor:pointer;font-family:var(--font);font-size:14px;font-weight:600;display:inline-flex;align-items:center;gap:7px;transition:.25s;white-space:nowrap;}
 .btn:hover{transform:translateY(-2px);}
@@ -42,6 +43,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .btn-camera{background:linear-gradient(135deg,#1d4ed8,#2563eb);color:#fff;}
 .btn-gallery{background:linear-gradient(135deg,#6d28d9,#7c3aed);color:#fff;}
 .btn-scan{background:linear-gradient(135deg,#065f46,#059669);color:#fff;flex:1;}
+.btn-capture{background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff;position:absolute;bottom:20px;left:50%;transform:translateX(-50%);display:none;z-index:10;padding:14px 28px;font-size:16px;}
 .btn-clear{background:var(--surface3);color:var(--muted);border:1px solid var(--border);}
 .progress-wrap{margin-top:14px;}
 .progress-track{height:6px;background:rgba(0,0,0,0.4);border-radius:99px;overflow:hidden;}
@@ -89,10 +91,21 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .toast.error{border-color:rgba(239,68,68,0.4);}
 @keyframes spin{to{transform:rotate(360deg)}}
 .spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0;}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:10000;align-items:center;justify-content:center;}
+.modal.show{display:flex;}
+.modal-content{background:var(--surface);border:1px solid var(--border2);border-radius:20px;padding:30px;max-width:600px;width:90%;max-height:80vh;overflow-y:auto;}
+.modal-header{font-family:var(--heading);font-size:20px;font-weight:700;margin-bottom:15px;display:flex;align-items:center;justify-content:space-between;}
+.close-modal{font-size:28px;cursor:pointer;color:var(--muted);}
+.close-modal:hover{color:var(--text);}
+.modal-body{line-height:1.8;font-size:14px;color:var(--muted);}
+.modal-body ol{margin-left:20px;margin-top:10px;}
+.modal-body li{margin-bottom:8px;}
+.code-block{background:var(--surface3);padding:12px;border-radius:8px;margin:10px 0;font-family:monospace;font-size:12px;overflow-x:auto;white-space:pre-wrap;word-break:break-all;}
 @media(max-width:900px){
   .main{grid-template-columns:1fr;padding:16px;}
   .header{padding:20px 16px 0;flex-wrap:wrap;}
   .fields-grid{grid-template-columns:1fr;}
+  .preview-area{height:280px;}
 }
 </style>
 </head>
@@ -116,16 +129,17 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
       <div class="preview-area" id="previewArea">
         <img id="previewImg" alt="ภาพบัตร">
+        <video id="cameraVideo" autoplay playsinline></video>
         <div class="placeholder-icon" id="placeholderIcon">🪪</div>
         <div class="placeholder-text" id="placeholderText">ถ่ายรูปหรือเลือกไฟล์บัตรประชาชน</div>
+        <button class="btn btn-capture" id="captureBtn" onclick="captureFromVideo()">📸 ถ่ายภาพ</button>
       </div>
 
-      <!-- hidden inputs — triggered via JS .click() ใช้งานได้ทุก browser & มือถือ -->
       <input id="cameraInput" type="file" accept="image/*" capture="environment" style="display:none">
       <input id="galleryInput" type="file" accept="image/*" style="display:none">
 
       <div class="btn-row">
-        <button class="btn btn-camera" onclick="document.getElementById('cameraInput').click()">📸 ถ่ายรูป</button>
+        <button class="btn btn-camera" onclick="startCamera()">📸 เปิดกล้อง</button>
         <button class="btn btn-gallery" onclick="document.getElementById('galleryInput').click()">🖼 คลังภาพ</button>
         <button class="btn btn-clear" onclick="clearImage()">✕ ล้าง</button>
       </div>
@@ -149,7 +163,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
         <div class="section-label">ข้อมูลจากบัตร (OCR)</div>
 
         <div class="field full">
-          <label>ชื่อลูกค้า (จากบัตร)</label>
+          <label>ชื่อ-นามสกุล</label>
           <input type="text" id="f_fullname" placeholder="ยังไม่ได้สแกน">
         </div>
         <div class="field full">
@@ -161,7 +175,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
         <div class="section-label">ข้อมูลเพิ่มเติม</div>
 
         <div class="field full">
-          <label>ชื่อผู้รับงาน</label>
+          <label>ผู้รับงาน</label>
           <input type="text" id="f_assignee" placeholder="ชื่อพนักงาน / หน่วยงาน">
         </div>
         <div class="field">
@@ -207,7 +221,8 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
         </div>
         <div class="sheet-status" id="sheetStatus"></div>
         <div style="margin-top:10px;font-size:11px;color:var(--muted);line-height:1.8;">
-          ⚠️ กล้องต้องเปิดผ่าน <strong style="color:var(--text)">https://</strong> เท่านั้น (GitHub Pages / Live Server / ngrok)
+          💡 สร้าง Google Apps Script → ติดตั้งเป็น Web App → วาง URL ด้านบน<br>
+          <a href="#" onclick="showSetupModal();return false;" style="color:var(--accent);">[ ดูวิธีตั้งค่า ▸]</a>
         </div>
       </div>
     </div>
@@ -227,15 +242,98 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
 </div>
 
+<!-- Setup Modal -->
+<div class="modal" id="setupModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <span>วิธีตั้งค่า Google Sheets</span>
+      <span class="close-modal" onclick="closeSetupModal()">&times;</span>
+    </div>
+    <div class="modal-body">
+      <ol>
+        <li>เปิด Google Sheets แล้วสร้างไฟล์ใหม่</li>
+        <li>คลิก <strong>Extensions → Apps Script</strong></li>
+        <li>วางโค้ดด้านล่างแทนที่โค้ดเดิม แล้วกด Save</li>
+        <li>คลิก <strong>Deploy → New deployment → Web app</strong></li>
+        <li>ตั้ง Execute as: <strong>Me</strong> / Who has access: <strong>Anyone</strong></li>
+        <li>คัดลอก URL มาวางในช่อง Web App URL</li>
+      </ol>
+      <div class="code-block" id="appScriptCode">function doPost(e) {
+  try {
+    var data = JSON.parse(e.postData.contents);
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheetName = data.sheet || 'Sheet1';
+    var sheet = ss.getSheetByName(sheetName);
+    
+    if (!sheet) sheet = ss.insertSheet(sheetName);
+    
+    if (sheet.getLastRow() === 0) {
+      sheet.appendRow(['ลำดับ','ชื่อผู้รับงาน','ชื่อลูกค้า','ที่อยู่','รหัสไปรษณีย์','เบอร์โทร','จำนวน','หมายเหตุ']);
+      sheet.getRange(1, 1, 1, 8)
+        .setFontWeight('bold')
+        .setBackground('#4f7cff')
+        .setFontColor('#ffffff')
+        .setHorizontalAlignment('center');
+      sheet.setFrozenRows(1);
+    }
+    
+    var seq = sheet.getLastRow();
+    var newRow = sheet.getLastRow() + 1;
+    
+    sheet.getRange(newRow, 5).setNumberFormat('@STRING@');
+    sheet.getRange(newRow, 6).setNumberFormat('@STRING@');
+    
+    sheet.appendRow([
+      seq,
+      data.assignee || '',
+      data.fullname || '',
+      data.address || '',
+      data.postcode || '',
+      formatPhone(data.phone),
+      data.qty || 1,
+      data.note || ''
+    ]);
+    
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: 'ok', row: newRow }))
+      .setMimeType(ContentService.MimeType.JSON);
+      
+  } catch (err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: 'error', message: err.message }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function doGet(e) {
+  return ContentService
+    .createTextOutput(JSON.stringify({ status: 'ok', message: 'Thai ID OCR Pro connected' }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function formatPhone(phone) {
+  if (!phone) return '';
+  var p = String(phone).replace(/\D/g, '');
+  if (p.length === 9) return p.slice(0,2) + '-' + p.slice(2,5) + '-' + p.slice(5);
+  if (p.length === 10) return p.slice(0,3) + '-' + p.slice(3,7) + '-' + p.slice(7);
+  return p;
+}</div>
+      <button class="btn btn-camera" onclick="copyCode()" style="margin-top:10px;">📋 คัดลอกโค้ด</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
 let selectedFile = null;
 let history = JSON.parse(localStorage.getItem('ocr_history') || '[]');
+let videoStream = null;
+
 renderHistory();
 loadConfig();
 
-/* IMAGE */
+/* IMAGE & CAMERA */
 function loadImage(e) {
   const file = e.target.files[0];
   if (!file) return;
@@ -243,20 +341,141 @@ function loadImage(e) {
   const reader = new FileReader();
   reader.onload = () => {
     const img = document.getElementById('previewImg');
-    img.src = reader.result; img.style.display = 'block';
+    const video = document.getElementById('cameraVideo');
+    img.src = reader.result; 
+    img.style.display = 'block';
+    video.style.display = 'none';
+    document.getElementById('captureBtn').style.display = 'none';
     document.getElementById('placeholderIcon').style.display = 'none';
     document.getElementById('placeholderText').style.display = 'none';
     document.getElementById('previewArea').classList.add('has-image');
+    stopCamera();
   };
   reader.readAsDataURL(file);
 }
 document.getElementById('cameraInput').addEventListener('change', loadImage);
 document.getElementById('galleryInput').addEventListener('change', loadImage);
 
+async function startCamera() {
+  const video = document.getElementById('cameraVideo');
+  const captureBtn = document.getElementById('captureBtn');
+  const img = document.getElementById('previewImg');
+  const placeholderIcon = document.getElementById('placeholderIcon');
+  const placeholderText = document.getElementById('placeholderText');
+  
+  // ซ่อน elements เดิม
+  img.style.display = 'none';
+  video.style.display = 'block';
+  captureBtn.style.display = 'block';
+  placeholderIcon.style.display = 'none';
+  placeholderText.style.display = 'none';
+  document.getElementById('previewArea').classList.add('has-image');
+  
+  try {
+    // ตรวจสอบ HTTPS
+    if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      throw new Error('ต้องใช้ HTTPS เพื่อเปิดกล้อง (หรือใช้ localhost)');
+    }
+    
+    // ตรวจสอบการรองรับ
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      throw new Error('เบราว์เซอร์นี้ไม่รองรับการเข้าถึงกล้อง');
+    }
+    
+    document.getElementById('statusText').textContent = 'กำลังเปิดกล้อง...';
+    
+    // ขอสิทธิ์เข้าถึงกล้อง
+    videoStream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: 'environment',
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
+      },
+      audio: false
+    });
+    
+    video.srcObject = videoStream;
+    document.getElementById('statusText').textContent = '✅ กล้องพร้อม - จัดวางบัตรแล้วกดถ่ายภาพ';
+    toast('เปิดกล้องสำเร็จ! จัดวางบัตรประชาชนแล้วกดถ่ายภาพ', 'success');
+    
+  } catch (err) {
+    console.error('Camera error:', err);
+    let message = 'ไม่สามารถเปิดกล้องได้';
+    
+    if (err.name === 'NotAllowedError') {
+      message = '❌ ไม่ได้อนุญาตให้ใช้กล้อง กรุณาอนุญาตในตั้งค่าเบราว์เซอร์';
+    } else if (err.name === 'NotFoundError') {
+      message = '❌ ไม่พบกล้องบนอุปกรณ์นี้';
+    } else if (err.name === 'NotReadableError') {
+      message = '❌ กล้องกำลังถูกใช้งานโดยแอปอื่น';
+    }
+    
+    message += '<br><small>หรือใช้ปุ่ม "🖼 คลังภาพ" แทน</small>';
+    
+    placeholderIcon.style.display = '';
+    placeholderText.innerHTML = message;
+    placeholderText.style.display = '';
+    video.style.display = 'none';
+    captureBtn.style.display = 'none';
+    document.getElementById('previewArea').classList.remove('has-image');
+    
+    document.getElementById('statusText').textContent = '❌ เปิดกล้องไม่สำเร็จ';
+    toast(message.replace(/<[^>]*>/g, ''), 'error');
+  }
+}
+
+function stopCamera() {
+  if (videoStream) {
+    videoStream.getTracks().forEach(track => track.stop());
+    videoStream = null;
+  }
+  const video = document.getElementById('cameraVideo');
+  video.srcObject = null;
+  video.style.display = 'none';
+  document.getElementById('captureBtn').style.display = 'none';
+}
+
+function captureFromVideo() {
+  const video = document.getElementById('cameraVideo');
+  if (!video || video.style.display === 'none') {
+    toast('กล้องยังไม่พร้อมใช้งาน', 'error');
+    return;
+  }
+  
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  
+  canvas.toBlob((blob) => {
+    selectedFile = new File([blob], 'capture.jpg', { type: 'image/jpeg' });
+    
+    const img = document.getElementById('previewImg');
+    img.src = canvas.toDataURL('image/jpeg');
+    img.style.display = 'block';
+    video.style.display = 'none';
+    document.getElementById('captureBtn').style.display = 'none';
+    document.getElementById('placeholderIcon').style.display = 'none';
+    document.getElementById('placeholderText').style.display = 'none';
+    
+    stopCamera();
+    
+    document.getElementById('statusText').textContent = '✅ ถ่ายภาพสำเร็จ - พร้อมวิเคราะห์';
+    toast('ถ่ายภาพสำเร็จ! กดวิเคราะห์บัตรเพื่อดึงข้อมูล', 'success');
+  }, 'image/jpeg', 0.9);
+}
+
 function clearImage() {
   selectedFile = null;
   const img = document.getElementById('previewImg');
-  img.src = ''; img.style.display = 'none';
+  const video = document.getElementById('cameraVideo');
+  img.src = ''; 
+  img.style.display = 'none';
+  video.style.display = 'none';
+  document.getElementById('captureBtn').style.display = 'none';
   document.getElementById('placeholderIcon').style.display = '';
   document.getElementById('placeholderText').style.display = '';
   document.getElementById('previewArea').classList.remove('has-image');
@@ -264,6 +483,7 @@ function clearImage() {
   document.getElementById('galleryInput').value = '';
   document.getElementById('progressBar').style.width = '0%';
   document.getElementById('statusText').textContent = 'พร้อมทำงาน';
+  stopCamera();
 }
 
 /* OCR */
@@ -274,7 +494,10 @@ async function scanOCR() {
   btn.innerHTML = '<div class="spinner"></div> กำลังวิเคราะห์...';
   document.getElementById('f_fullname').value = '';
   document.getElementById('f_address').value = '';
+  document.getElementById('f_postcode').value = '';
+  document.getElementById('f_phone').value = '';
   document.getElementById('progressBar').style.width = '0%';
+  
   try {
     const { data: { text } } = await Tesseract.recognize(selectedFile, 'tha+eng', {
       logger: m => {
@@ -282,12 +505,19 @@ async function scanOCR() {
         if (m.status)   document.getElementById('statusText').textContent = m.status;
       }
     });
+    
+    console.log('OCR Text:', text);
     const r = extractThaiID(text);
+    
     setField('f_fullname', r.fullname);
-    setField('f_address',  r.address);
+    setField('f_address', r.address);
+    if (r.postcode) document.getElementById('f_postcode').value = r.postcode;
+    if (r.phone) document.getElementById('f_phone').value = r.phone;
+    
     document.getElementById('statusText').textContent = '✅ วิเคราะห์สำเร็จ';
     toast('OCR สำเร็จ! ตรวจสอบข้อมูลก่อนบันทึก', 'success');
   } catch(err) {
+    console.error('OCR Error:', err);
     document.getElementById('statusText').textContent = '❌ เกิดข้อผิดพลาด';
     toast('OCR ล้มเหลว: ' + err.message, 'error');
   }
@@ -303,33 +533,64 @@ function setField(id, val) {
 
 function extractThaiID(text) {
   const lines = text.split('\n').map(x => x.trim()).filter(x => x !== '');
-  let fullname = '', address = '';
-  for (let i = 0; i < lines.length; i++) {
-    let line = lines[i]
-      .replace('ชื่อและชื่อสกุล','').replace('ชื่อตัวและชื่อเอก','')
-      .replace('ชื่อตัว','').replace('Name','').replace('Last name','')
-      .replace('UN','นาง').trim();
-    let thai = line.match(/(นาย|นาง|นางสาว)\s+[ก-๙]+\s+[ก-๙]+/);
-    if (thai) { fullname = thai[0]; break; }
-  }
-  for (let i = 0; i < lines.length; i++) {
-    let line = lines[i];
-    if (/\d+\/\d+/.test(line) || line.includes('หมู่')) {
-      let addr = [];
-      for (let j = i; j < i+3; j++) {
-        if (!lines[j]) continue;
-        if (lines[j].includes('2559')||lines[j].includes('Date')||lines[j].includes('วัน')) break;
-        addr.push(lines[j]);
-      }
-      address = addr.join(' ').replace(/[=~fw)J]/g,'').replace(/\s+/g,' ').trim();
+  let fullname = '', address = '', postcode = '', phone = '';
+  
+  const cleanText = text.replace(/[=~fw)J]/g, ' ').replace(/\s+/g, ' ');
+  const cleanLines = cleanText.split('\n').map(x => x.trim()).filter(x => x !== '');
+  
+  for (let line of cleanLines) {
+    let nameMatch = line.match(/(นาย|นาง|นางสาว)\s+([ก-๙\s]+?)(?:\s+(?:Name|Last name|วันที่|$))/i);
+    if (nameMatch) {
+      fullname = nameMatch[0].replace(/\s+/g, ' ').trim();
       break;
     }
   }
-  fullname = fullname.replace(/\bUN\b/g,'นาง').replace(/\s+/g,' ').trim();
-  return { fullname: fullname||'', address: address||'' };
+  
+  if (!fullname) {
+    for (let line of cleanLines) {
+      if (line.includes('Name') && !line.includes('Last name')) {
+        let namePart = line.replace(/Name/i, '').trim();
+        if (namePart.length > 3) {
+          fullname = namePart;
+          break;
+        }
+      }
+    }
+  }
+  
+  let addressStart = -1;
+  for (let i = 0; i < cleanLines.length; i++) {
+    let line = cleanLines[i];
+    if (line.includes('หมู่') || line.includes('หมู่ที่') || /\d+\/\d+/.test(line) || line.includes('ถนน') || line.includes('ซอย')) {
+      addressStart = i;
+      break;
+    }
+  }
+  
+  if (addressStart !== -1) {
+    let addressLines = [];
+    for (let i = addressStart; i < Math.min(addressStart + 4, cleanLines.length); i++) {
+      let line = cleanLines[i];
+      if (line.includes('25') || line.includes('Date') || line.includes('วันออก') || line.includes('วันหมด')) break;
+      if (line.length > 5) addressLines.push(line);
+    }
+    address = addressLines.join(' ').trim();
+  }
+  
+  let postcodeMatch = cleanText.match(/\b(\d{5})\b/);
+  if (postcodeMatch) postcode = postcodeMatch[1];
+  
+  let phoneMatch = cleanText.match(/(\d{3}[-\s]?\d{3}[-\s]?\d{4})/);
+  if (phoneMatch) phone = formatPhone(phoneMatch[1]);
+  
+  return { 
+    fullname: fullname || '', 
+    address: address || '',
+    postcode: postcode || '',
+    phone: phone || ''
+  };
 }
 
-/* PHONE FORMAT */
 function formatPhone(phone) {
   if (!phone) return '';
   let p = String(phone).replace(/\D/g,'');
@@ -442,6 +703,29 @@ function toast(msg, type='success') {
   el.className = `toast ${type} show`;
   setTimeout(() => el.classList.remove('show'), 3200);
 }
+
+/* MODAL */
+function showSetupModal() {
+  document.getElementById('setupModal').classList.add('show');
+}
+function closeSetupModal() {
+  document.getElementById('setupModal').classList.remove('show');
+}
+function copyCode() {
+  const code = document.getElementById('appScriptCode').textContent;
+  navigator.clipboard.writeText(code).then(() => {
+    toast('คัดลอกโค้ดแล้ว!', 'success');
+  });
+}
+window.onclick = function(event) {
+  const modal = document.getElementById('setupModal');
+  if (event.target === modal) closeSetupModal();
+}
+
+/* CLEANUP */
+window.onbeforeunload = function() {
+  stopCamera();
+};
 </script>
 </body>
 </html>
