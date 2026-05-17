@@ -2,254 +2,323 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Thai ID OCR Pro</title>
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js">/* ===== CAMERA getUserMedia ===== */
-let cameraStream = null;
-let facingMode = 'environment';
-let useFallback = false;
-
-function showCameraStatus(msg) {
-  const el = document.getElementById('cameraStatus');
-  el.textContent = msg;
-  el.style.display = 'block';
-  setTimeout(() => el.style.display = 'none', 2500);
-}
-
-async function openCamera() {
-  // ลอง getUserMedia ก่อน
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    useFallback = true;
-    document.getElementById('cameraInput').click();
-    return;
-  }
-  const overlay = document.getElementById('cameraOverlay');
-  const video = document.getElementById('cameraVideo');
-  overlay.style.display = 'flex';
-  showCameraStatus('กำลังเปิดกล้อง...');
-  try {
-    if (cameraStream) {
-      cameraStream.getTracks().forEach(t => t.stop());
-    }
-    const constraints = {
-      video: {
-        facingMode: { ideal: facingMode },
-        width: { ideal: 1920 },
-        height: { ideal: 1080 }
-      },
-      audio: false
-    };
-    cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
-    video.srcObject = cameraStream;
-    await video.play();
-    showCameraStatus('กล้องพร้อมใช้งาน');
-  } catch (err) {
-    console.error('Camera error:', err);
-    showCameraStatus('ไม่สามารถเปิดกล้อง: ' + err.name);
-    // fallback ไปยัง input file
-    setTimeout(() => {
-      closeCamera();
-      useFallback = true;
-      document.getElementById('cameraInput').click();
-    }, 1200);
-  }
-}
-
-function closeCamera() {
-  const overlay = document.getElementById('cameraOverlay');
-  const video = document.getElementById('cameraVideo');
-  if (cameraStream) {
-    cameraStream.getTracks().forEach(t => t.stop());
-    cameraStream = null;
-  }
-  video.srcObject = null;
-  overlay.style.display = 'none';
-}
-
-function flipCamera() {
-  facingMode = facingMode === 'environment' ? 'user' : 'environment';
-  openCamera();
-}
-
-function snapPhoto() {
-  const video = document.getElementById('cameraVideo');
-  const canvas = document.getElementById('cameraCanvas');
-  if (!video.videoWidth) {
-    showCameraStatus('รอให้กล้องพร้อม...');
-    return;
-  }
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-  const ctx = canvas.getContext('2d');
-  // ถ้าใช้กล้องหน้า (user) ต้อง flip กลับ
-  if (facingMode === 'user') {
-    ctx.translate(canvas.width, 0);
-    ctx.scale(-1, 1);
-  }
-  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-  canvas.toBlob((blob) => {
-    const file = new File([blob], 'camera-capture.jpg', { type: 'image/jpeg' });
-    selectedFile = file;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const img = document.getElementById('previewImg');
-      img.src = reader.result;
-      img.style.display = 'block';
-      document.getElementById('placeholderIcon').style.display = 'none';
-      document.getElementById('placeholderText').style.display = 'none';
-      document.getElementById('previewArea').classList.add('has-image');
-      closeCamera();
-      toast('ถ่ายรูปสำเร็จ!', 'success');
-    };
-    reader.readAsDataURL(file);
-  }, 'image/jpeg', 0.92);
-}
-
-// ปิดกล้องเมื่อกด Escape
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') closeCamera();
-});
-</script>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Prompt:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 :root{
-  --bg:#0a0f1e;--surface:#111827;--surface2:#1a2235;--surface3:#222d42;
-  --border:rgba(99,132,255,0.18);--border2:rgba(99,132,255,0.35);
-  --accent:#4f7cff;--accent2:#7c3aed;
-  --success:#10b981;--warning:#f59e0b;--danger:#ef4444;
-  --text:#e8eaf6;--muted:#8892b0;
+  --bg:#f8f9fb;--bg-secondary:#ffffff;
+  --surface:#ffffff;--surface2:#f5f7fa;--surface3:#eef2f8;
+  --border:#e0e7f1;--border2:#d0dce8;
+  --accent:#5b7cff;--accent2:#6b5cff;--accent-light:#e8ecff;
+  --success:#10b981;--danger:#ef4444;--warning:#f59e0b;
+  --text:#1a202c;--text-secondary:#4a5568;--muted:#718096;
   --font:'Sarabun',sans-serif;--heading:'Prompt',sans-serif;
+  --shadow-sm:0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md:0 4px 12px rgba(0,0,0,0.12);
+  --shadow-lg:0 8px 24px rgba(0,0,0,0.15);
 }
-body{background:var(--bg);font-family:var(--font);color:var(--text);min-height:100vh;padding:0;overflow-x:hidden;}
-body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 50% at 20% 20%,rgba(79,124,255,0.08) 0%,transparent 60%),radial-gradient(ellipse 60% 40% at 80% 80%,rgba(124,58,237,0.07) 0%,transparent 60%);pointer-events:none;z-index:0;}
-.header{position:relative;z-index:1;padding:28px 32px 0;display:flex;align-items:center;gap:16px;}
-.header-icon{width:52px;height:52px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;}
-.header-title{font-family:var(--heading);font-size:26px;font-weight:700;letter-spacing:-0.5px;}
-.header-sub{font-size:13px;color:var(--muted);margin-top:2px;}
-.header-badge{margin-left:auto;background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.3);color:#10b981;font-size:12px;font-weight:600;padding:5px 14px;border-radius:20px;display:flex;align-items:center;gap:6px;}
+body{background:var(--bg);font-family:var(--font);color:var(--text);min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 50% at 20% 20%,rgba(91,124,255,0.04) 0%,transparent 60%),radial-gradient(ellipse 60% 40% at 80% 80%,rgba(107,92,255,0.03) 0%,transparent 60%);pointer-events:none;z-index:0;}
+
+/* ── HEADER ── */
+.header{position:relative;z-index:1;padding:28px 24px 20px;display:flex;align-items:center;gap:16px;background:var(--surface);border-bottom:1px solid var(--border);box-shadow:var(--shadow-sm);}
+.header-icon{width:52px;height:52px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;box-shadow:0 4px 12px rgba(91,124,255,0.25);cursor:pointer;transition:.2s;}
+.header-icon:active{transform:scale(0.95);}
+.header-title{font-family:var(--heading);font-size:24px;font-weight:700;color:var(--text);}
+.header-sub{font-size:13px;color:var(--muted);margin-top:4px;}
+.header-badge{margin-left:auto;background:linear-gradient(135deg,rgba(16,185,129,0.1),rgba(16,185,129,0.05));border:1px solid rgba(16,185,129,0.3);color:#10b981;font-size:12px;font-weight:600;padding:6px 14px;border-radius:24px;display:flex;align-items:center;gap:6px;white-space:nowrap;}
 .dot{width:7px;height:7px;border-radius:50%;background:#10b981;animation:pulse 2s infinite;}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-.main{position:relative;z-index:1;padding:24px 32px 32px;display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:1400px;margin:0 auto;}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:22px;position:relative;overflow:hidden;}
-.card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--border2),transparent);}
-.card-title{font-family:var(--heading);font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
-.card-title span{width:20px;height:20px;background:rgba(79,124,255,0.15);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;}
-.preview-area{height:260px;background:rgba(0,0,0,0.3);border:2px dashed var(--border);border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;overflow:hidden;position:relative;transition:.3s;}
-.preview-area.has-image{border-style:solid;border-color:var(--border2);}
-.preview-area img{width:100%;height:100%;object-fit:contain;display:none;}
-.placeholder-icon{font-size:36px;opacity:.3;}
-.placeholder-text{font-size:14px;color:var(--muted);}
+
+/* ── LAYOUT ── */
+.main{position:relative;z-index:1;padding:28px 24px 40px;display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:1400px;margin:0 auto;}
+
+/* ── CARD ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:24px;position:relative;overflow:hidden;box-shadow:var(--shadow-sm);transition:.3s;}
+.card:hover{box-shadow:var(--shadow-md);}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--accent),transparent);}
+.card-title{font-family:var(--heading);font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1.8px;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.card-title i{width:20px;height:20px;background:var(--accent-light);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-style:normal;color:var(--accent);}
+
+/* ── CAMERA MODAL ── */
+#cameraModal{
+  display:none;position:fixed;inset:0;z-index:1000;
+  background:#000;flex-direction:column;align-items:center;justify-content:center;
+}
+#cameraModal.open{display:flex;}
+#videoEl{
+  width:100%;height:100%;object-fit:cover;
+  transform:scaleX(1);
+}
+#videoEl.mirrored{transform:scaleX(-1);}
+
+/* กรอบเล็งบัตร */
+.cam-overlay{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  pointer-events:none;
+}
+.cam-frame{
+  width:min(88vw, 520px);
+  aspect-ratio:85.6/54;
+  position:relative;
+  border:3px solid rgba(255,255,255,0.6);
+  border-radius:12px;
+  box-shadow:inset 0 0 20px rgba(91,124,255,0.2), 0 0 40px rgba(91,124,255,0.3);
+}
+/* มุมกรอบ */
+.cam-frame::before,.cam-frame::after,
+.cam-corner-bl,.cam-corner-br{
+  content:'';position:absolute;
+  width:40px;height:40px;
+  border-color:#ffffff;
+  border-style:solid;
+}
+.cam-frame::before{top:0;left:0;border-width:3px 0 0 3px;border-radius:6px 0 0 0;}
+.cam-frame::after {top:0;right:0;border-width:3px 3px 0 0;border-radius:0 6px 0 0;}
+.cam-corner-bl{bottom:0;left:0;border-width:0 0 3px 3px;border-radius:0 0 0 6px;}
+.cam-corner-br{bottom:0;right:0;border-width:0 3px 3px 0;border-radius:0 0 6px 0;}
+
+/* scan line */
+.scan-line{
+  position:absolute;left:4px;right:4px;height:2px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.9),transparent);
+  animation:scanMove 2.2s ease-in-out infinite;
+  box-shadow:0 0 12px rgba(255,255,255,0.8);
+}
+@keyframes scanMove{0%,100%{top:4px}50%{top:calc(100% - 6px)}}
+
+/* dimmed area outside frame */
+.cam-dim-top,.cam-dim-bottom,.cam-dim-left,.cam-dim-right{
+  position:absolute;background:rgba(0,0,0,0.6);
+}
+.cam-hint{
+  color:rgba(255,255,255,.9);font-size:14px;font-family:var(--font);font-weight:500;
+  margin-top:20px;text-align:center;letter-spacing:.3px;
+}
+
+/* camera control bar */
+.cam-bar{
+  position:absolute;bottom:0;left:0;right:0;
+  padding:24px 24px 40px;
+  background:linear-gradient(transparent,rgba(0,0,0,0.9));
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+}
+.cam-shutter{
+  width:76px;height:76px;border-radius:50%;
+  background:#fff;border:5px solid rgba(255,255,255,.3);
+  cursor:pointer;transition:.15s;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 0 8px rgba(255,255,255,.12);
+}
+.cam-shutter:active{transform:scale(.92);}
+.cam-shutter-inner{width:60px;height:60px;border-radius:50%;background:#fff;}
+.cam-btn{
+  background:rgba(255,255,255,.18);backdrop-filter:blur(10px);
+  border:1px solid rgba(255,255,255,.3);border-radius:14px;
+  color:#fff;font-family:var(--font);font-size:14px;font-weight:600;
+  padding:12px 18px;cursor:pointer;transition:.2s;
+  display:flex;align-items:center;gap:7px;
+}
+.cam-btn:hover{background:rgba(255,255,255,.25);}
+.cam-btn:active{transform:scale(.97);}
+.cam-btn.active{background:rgba(91,124,255,0.6);border-color:rgba(91,124,255,0.9);}
+.cam-top-bar{
+  position:absolute;top:0;left:0;right:0;padding:20px 24px 16px;
+  background:linear-gradient(rgba(0,0,0,.8),transparent);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.cam-label{color:#fff;font-size:15px;font-weight:600;font-family:var(--font);}
+.cam-close{background:rgba(255,255,255,.15);border:none;color:#fff;font-size:20px;width:40px;height:40px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s;}
+.cam-close:hover{background:rgba(255,255,255,.25);}
+
+/* camera status indicator */
+.cam-status{
+  position:absolute;top:20px;left:24px;color:#fff;font-size:13px;font-weight:600;
+  display:flex;align-items:center;gap:9px;
+  background:rgba(0,0,0,0.5);padding:10px 14px;border-radius:24px;
+}
+.cam-status-dot{width:8px;height:8px;border-radius:50%;background:#10b981;animation:pulse 2s infinite;}
+
+/* ── PREVIEW ── */
+.preview-area{
+  height:260px;background:var(--surface3);border:2px dashed var(--border2);border-radius:16px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+  overflow:hidden;position:relative;transition:.3s;cursor:pointer;
+}
+.preview-area.has-image{border-style:solid;border-color:var(--accent);background:var(--accent-light);cursor:default;}
+.preview-area:not(.has-image):hover{border-color:var(--accent);background:rgba(91,124,255,0.04);}
+#previewImg{width:100%;height:100%;object-fit:contain;display:none;}
+.placeholder-icon{font-size:40px;opacity:.4;}
+.placeholder-text{font-size:14px;color:var(--muted);text-align:center;line-height:1.7;}
+
+/* ── BUTTONS ── */
 .btn-row{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;}
-.btn{padding:11px 18px;border:none;border-radius:12px;cursor:pointer;font-family:var(--font);font-size:14px;font-weight:600;display:inline-flex;align-items:center;gap:7px;transition:.25s;white-space:nowrap;}
-.btn:hover{transform:translateY(-2px);}
+.btn{padding:11px 18px;border:none;border-radius:12px;cursor:pointer;font-family:var(--font);font-size:14px;font-weight:600;display:inline-flex;align-items:center;gap:7px;transition:.2s;white-space:nowrap;box-shadow:var(--shadow-sm);}
+.btn:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);}
 .btn:active{transform:translateY(0);}
-.btn-camera{background:linear-gradient(135deg,#1d4ed8,#2563eb);color:#fff;}
-.btn-gallery{background:linear-gradient(135deg,#6d28d9,#7c3aed);color:#fff;}
-.btn-scan{background:linear-gradient(135deg,#065f46,#059669);color:#fff;flex:1;}
-.btn-clear{background:var(--surface3);color:var(--muted);border:1px solid var(--border);}
+.btn-cam   {background:linear-gradient(135deg,#5b7cff,#6b5cff);color:#fff;}
+.btn-gallery{background:linear-gradient(135deg,#8b5cf6,#a855f7);color:#fff;}
+.btn-scan  {background:linear-gradient(135deg,#10b981,#059669);color:#fff;flex:1;justify-content:center;}
+.btn-ghost {background:var(--surface3);color:var(--text-secondary);border:1.5px solid var(--border);}
+.btn-test  {background:var(--surface3);color:var(--text-secondary);border:1.5px solid var(--border);}
+
+/* ── PROGRESS ── */
 .progress-wrap{margin-top:14px;}
-.progress-track{height:6px;background:rgba(0,0,0,0.4);border-radius:99px;overflow:hidden;}
-.progress-bar{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:99px;transition:.15s;}
-.status-text{font-size:12px;color:var(--muted);margin-top:7px;min-height:18px;}
+.progress-track{height:6px;background:var(--surface3);border-radius:99px;overflow:hidden;}
+.progress-bar{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:99px;transition:.4s;box-shadow:0 0 8px rgba(91,124,255,0.3);}
+@keyframes prog{0%{width:5%}30%{width:45%}70%{width:78%}100%{width:92%}}
+.progress-bar.animating{animation:prog 4s ease forwards;}
+.status-text{font-size:13px;color:var(--muted);margin-top:6px;min-height:18px;}
+
+/* ── FORM ── */
 .fields-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-.field{display:flex;flex-direction:column;gap:5px;}
+.field{display:flex;flex-direction:column;gap:6px;}
 .field.full{grid-column:1/-1;}
-.field label{font-size:12px;color:var(--muted);font-weight:600;letter-spacing:.5px;text-transform:uppercase;}
-.field input,.field textarea{background:var(--surface3);border:1px solid var(--border);border-radius:10px;padding:9px 12px;color:var(--text);font-family:var(--font);font-size:15px;outline:none;transition:.2s;width:100%;}
-.field input:focus,.field textarea:focus{border-color:var(--accent);background:rgba(79,124,255,0.05);box-shadow:0 0 0 3px rgba(79,124,255,0.12);}
-.field textarea{resize:vertical;min-height:60px;}
-.field input::placeholder,.field textarea::placeholder{color:var(--muted);opacity:.5;}
-.ocr-highlight{background:rgba(79,124,255,0.1);border-color:rgba(79,124,255,0.4)!important;}
-.divider{grid-column:1/-1;border:none;border-top:1px solid var(--border);margin:2px 0;}
-.section-label{grid-column:1/-1;font-size:11px;color:var(--accent);font-weight:600;letter-spacing:1.5px;text-transform:uppercase;display:flex;align-items:center;gap:8px;margin-top:4px;}
+.field label{font-size:12px;color:var(--text-secondary);font-weight:600;letter-spacing:.5px;text-transform:uppercase;}
+.field input,.field textarea{background:var(--surface3);border:1.5px solid var(--border);border-radius:12px;padding:10px 13px;color:var(--text);font-family:var(--font);font-size:14px;outline:none;transition:.2s;width:100%;}
+.field input:focus,.field textarea:focus{border-color:var(--accent);background:var(--accent-light);box-shadow:0 0 0 4px rgba(91,124,255,0.1);}
+.field textarea{resize:vertical;min-height:64px;}
+.field input::placeholder,.field textarea::placeholder{color:var(--muted);opacity:.55;}
+.ocr-highlight{background:rgba(16,185,129,0.12)!important;border-color:rgba(16,185,129,0.4)!important;}
+.divider{grid-column:1/-1;border:none;border-top:1.5px solid var(--border);margin:4px 0;}
+.section-label{grid-column:1/-1;font-size:11px;color:var(--accent);font-weight:700;letter-spacing:1.8px;text-transform:uppercase;display:flex;align-items:center;gap:8px;margin-top:6px;}
 .section-label::before,.section-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--border));}
 .section-label::after{background:linear-gradient(270deg,transparent,var(--border));}
-.btn-submit{width:100%;padding:14px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:14px;color:#fff;font-family:var(--heading);font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;margin-top:16px;transition:.25s;letter-spacing:.3px;position:relative;overflow:hidden;}
-.btn-submit::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,0.1),transparent);}
-.btn-submit:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(79,124,255,0.35);}
-.btn-submit:active{transform:translateY(0);}
-.btn-submit:disabled{opacity:.5;cursor:not-allowed;transform:none;}
-.sheet-config{background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px;}
-.sheet-row{display:flex;gap:10px;align-items:flex-end;}
-.sheet-row .field{flex:1;}
-.sheet-status{font-size:12px;margin-top:8px;padding:6px 12px;border-radius:8px;display:none;}
-.sheet-ok{background:rgba(16,185,129,0.1);color:#10b981;border:1px solid rgba(16,185,129,0.2);}
-.sheet-err{background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.2);}
-.history-wrap{grid-column:1/-1;margin-top:4px;}
+
+/* ── SUBMIT ── */
+.btn-submit{width:100%;padding:14px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:14px;color:#fff;font-family:var(--heading);font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;margin-top:16px;transition:.25s;position:relative;overflow:hidden;box-shadow:0 6px 20px rgba(91,124,255,0.3);}
+.btn-submit::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,0.15),transparent);}
+.btn-submit:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(91,124,255,0.4);}
+.btn-submit:disabled{opacity:.6;cursor:not-allowed;transform:none;}
+
+/* ── CONFIG ── */
+.config-section{display:none;}
+.config-section.visible{display:block;}
+.config-block{background:var(--surface2);border:1.5px solid var(--border);border-radius:16px;padding:16px;margin-bottom:14px;}
+.config-block:last-child{margin-bottom:0;}
+.config-label{font-size:12px;font-weight:700;color:var(--accent);margin-bottom:11px;text-transform:uppercase;letter-spacing:1.5px;display:flex;align-items:center;gap:7px;}
+.config-row{display:flex;gap:10px;align-items:flex-end;}
+.config-row .field{flex:1;}
+.config-note{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.8;}
+.config-note a{color:var(--accent);text-decoration:none;font-weight:600;transition:.2s;}
+.config-note a:hover{text-decoration:underline;}
+.status-pill{font-size:13px;margin-top:8px;padding:8px 12px;border-radius:10px;display:none;line-height:1.6;font-weight:500;}
+.pill-ok  {background:rgba(16,185,129,0.12);color:#059669;border:1px solid rgba(16,185,129,0.3);}
+.pill-err {background:rgba(239,68,68,0.12);color:#dc2626;border:1px solid rgba(239,68,68,0.3);}
+.pill-warn{background:rgba(245,158,11,0.12);color:#d97706;border:1px solid rgba(245,158,11,0.3);}
+
+/* ── HISTORY ── */
+.history-wrap{grid-column:1/-1;}
 .history-table{width:100%;border-collapse:collapse;font-size:13px;}
-.history-table th{text-align:left;padding:8px 12px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--border);font-size:12px;letter-spacing:.5px;text-transform:uppercase;}
-.history-table td{padding:9px 12px;border-bottom:1px solid rgba(255,255,255,0.04);vertical-align:middle;}
+.history-table th{text-align:left;padding:10px 13px;color:var(--muted);font-weight:700;border-bottom:1.5px solid var(--border);font-size:11px;letter-spacing:.6px;text-transform:uppercase;}
+.history-table td{padding:10px 13px;border-bottom:1px solid var(--border);vertical-align:middle;}
 .history-table tr:last-child td{border-bottom:none;}
-.history-table tr:hover td{background:rgba(255,255,255,0.02);}
+.history-table tr:hover td{background:var(--surface2);}
 .tag{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;}
-.tag-ok{background:rgba(16,185,129,0.12);color:#10b981;}
-.tag-err{background:rgba(239,68,68,0.12);color:#ef4444;}
-.tag-pen{background:rgba(245,158,11,0.12);color:#f59e0b;}
-.empty-history{text-align:center;padding:30px;color:var(--muted);font-size:14px;}
-.count-badge{background:rgba(79,124,255,0.15);color:var(--accent);font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:8px;}
-.toast{position:fixed;bottom:30px;right:30px;background:var(--surface2);border:1px solid var(--border2);border-radius:14px;padding:14px 20px;font-size:14px;font-weight:500;z-index:9999;transform:translateY(80px);opacity:0;transition:.3s cubic-bezier(.34,1.56,.64,1);display:flex;align-items:center;gap:10px;min-width:240px;box-shadow:0 12px 40px rgba(0,0,0,.5);}
+.tag-ok {background:rgba(16,185,129,0.15);color:#059669;}
+.tag-err{background:rgba(239,68,68,0.15);color:#dc2626;}
+.tag-pen{background:rgba(245,158,11,0.15);color:#d97706;}
+.empty-history{text-align:center;padding:32px;color:var(--muted);font-size:14px;}
+.count-badge{background:var(--accent-light);color:var(--accent);font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;margin-left:7px;}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:14px 18px;font-size:14px;font-weight:500;z-index:9999;transform:translateY(80px);opacity:0;transition:.3s cubic-bezier(.34,1.56,.64,1);display:flex;align-items:center;gap:10px;min-width:220px;max-width:360px;box-shadow:var(--shadow-lg);}
 .toast.show{transform:translateY(0);opacity:1;}
-.toast.success{border-color:rgba(16,185,129,0.4);}
-.toast.error{border-color:rgba(239,68,68,0.4);}
+.toast.success{border-color:rgba(16,185,129,0.3);background:rgba(16,185,129,0.05);}
+.toast.error  {border-color:rgba(239,68,68,0.3);background:rgba(239,68,68,0.05);}
+
 @keyframes spin{to{transform:rotate(360deg)}}
-.spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0;}
-@media(max-width:900px){
+.spinner{width:15px;height:15px;border:2.5px solid var(--surface3);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0;}
+
+/* hidden canvas for capture */
+#snapCanvas{display:none;}
+/* gallery input */
+#galleryInput{display:none;}
+
+@media(max-width:860px){
   .main{grid-template-columns:1fr;padding:16px;}
-  .header{padding:20px 16px 0;flex-wrap:wrap;}
+  .header{padding:20px 16px 16px;flex-wrap:wrap;}
   .fields-grid{grid-template-columns:1fr;}
+  .config-row{flex-wrap:wrap;}
 }
 </style>
-<base target="_blank">
 </head>
 <body>
 
+<!-- ═══ CAMERA MODAL ═══ -->
+<div id="cameraModal">
+  <video id="videoEl" autoplay playsinline></video>
+  <canvas id="snapCanvas"></canvas>
+
+  <div id="dimTop"   style="position:absolute;top:0;left:0;right:0;background:rgba(0,0,0,.6);pointer-events:none;"></div>
+  <div id="dimBottom"style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.6);pointer-events:none;"></div>
+  <div id="dimLeft"  style="position:absolute;left:0;background:rgba(0,0,0,.6);pointer-events:none;"></div>
+  <div id="dimRight" style="position:absolute;right:0;background:rgba(0,0,0,.6);pointer-events:none;"></div>
+
+  <div class="cam-overlay">
+    <div class="cam-frame" id="camFrame">
+      <div class="cam-corner-bl"></div>
+      <div class="cam-corner-br"></div>
+      <div class="scan-line"></div>
+    </div>
+    <div class="cam-hint">วางบัตรให้อยู่ในกรอบ — ถือนิ่งๆ แล้วกดถ่าย</div>
+  </div>
+
+  <div class="cam-status" id="camStatus">
+    <div class="cam-status-dot"></div>
+    <span id="camStatusText">กล้องหลัง</span>
+  </div>
+
+  <div class="cam-top-bar">
+    <div class="cam-label">📷 ถ่ายบัตรประชาชน</div>
+    <button class="cam-close" onclick="closeCamera()">✕</button>
+  </div>
+
+  <div class="cam-bar">
+    <button class="cam-btn" id="flipBtn" onclick="flipCamera()">🔄 สลับกล้อง</button>
+    <div class="cam-shutter" onclick="capturePhoto()">
+      <div class="cam-shutter-inner"></div>
+    </div>
+    <button class="cam-btn" onclick="closeCamera()">❌ ยกเลิก</button>
+  </div>
+</div>
+
+<!-- ═══ MAIN UI ═══ -->
 <div class="header">
-  <div class="header-icon">🪪</div>
+  <div class="header-icon" id="headerIcon" onclick="toggleConfig()">🪪</div>
   <div>
     <div class="header-title">Thai ID OCR Pro</div>
-    <div class="header-sub">ระบบสแกนบัตรประชาชนและบันทึกข้อมูลอัตโนมัติ</div>
+    <div class="header-sub">สแกนบัตรประชาชนด้วย OCR.space และบันทึกลง Google Sheets</div>
   </div>
-  <div class="header-badge"><span class="dot"></span> พร้อมทำงาน</div>
+  <div class="header-badge">
+    <div class="dot"></div>
+    <span>พร้อมใช้งาน</span>
+  </div>
 </div>
 
 <div class="main">
 
-  <!-- LEFT -->
+  <!-- LEFT: SCAN -->
   <div>
     <div class="card">
-      <div class="card-title"><span>📷</span> สแกนบัตรประชาชน</div>
+      <div class="card-title"><i>📷</i> สแกนบัตรประชาชน</div>
 
-      <div class="preview-area" id="previewArea">
+      <div class="preview-area" id="previewArea" onclick="onPreviewClick()">
         <img id="previewImg" alt="ภาพบัตร">
-        <div class="placeholder-icon" id="placeholderIcon">🪪</div>
-        <div class="placeholder-text" id="placeholderText">ถ่ายรูปหรือเลือกไฟล์บัตรประชาชน</div>
+        <div class="placeholder-icon" id="phIcon">🪪</div>
+        <div class="placeholder-text" id="phText">แตะเพื่อเปิดกล้อง<br><span style="font-size:12px;opacity:.7">หรือใช้ปุ่มด้านล่าง</span></div>
       </div>
 
-      <!-- hidden inputs — triggered via JS .click() ใช้งานได้ทุก browser & มือถือ -->
-  <!-- CAMERA OVERLAY (getUserMedia) -->
-  <div id="cameraOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:1000;flex-direction:column;align-items:center;justify-content:center;padding:20px;">
-    <div style="position:relative;width:100%;max-width:640px;">
-      <video id="cameraVideo" autoplay playsinline muted style="width:100%;border-radius:16px;background:#000;transform:scaleX(-1);" playsinline webkit-playsinline></video>
-      <canvas id="cameraCanvas" style="display:none;"></canvas>
-      <div style="position:absolute;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:16px;align-items:center;">
-        <button class="btn" style="background:var(--surface3);border:1px solid var(--border);color:var(--text);" onclick="closeCamera()">✕ ปิด</button>
-        <button class="btn" style="width:64px;height:64px;border-radius:50%;background:#fff;border:4px solid rgba(255,255,255,0.3);padding:0;display:flex;align-items:center;justify-content:center;" onclick="snapPhoto()">
-          <div style="width:48px;height:48px;border-radius:50%;background:#ef4444;"></div>
-        </button>
-        <button class="btn" style="background:var(--surface3);border:1px solid var(--border);color:var(--text);" onclick="flipCamera()">🔄 สลับ</button>
-      </div>
-      <div id="cameraStatus" style="position:absolute;top:12px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.6);color:#fff;padding:6px 16px;border-radius:20px;font-size:13px;display:none;"></div>
-    </div>
-  </div>
-      <input id="cameraInput" type="file" accept="image/*" capture="environment" style="display:none">
-      <input id="galleryInput" type="file" accept="image/*" style="display:none">
+      <input id="galleryInput" type="file" accept="image/*">
 
       <div class="btn-row">
-        <button class="btn btn-camera" onclick="openCamera()">📸 ถ่ายรูป</button>
+        <button class="btn btn-cam" onclick="openCamera()">📸 เปิดกล้อง</button>
         <button class="btn btn-gallery" onclick="document.getElementById('galleryInput').click()">🖼 คลังภาพ</button>
-        <button class="btn btn-clear" onclick="clearImage()">✕ ล้าง</button>
+        <button class="btn btn-ghost" onclick="clearAll()">✕</button>
       </div>
       <div class="btn-row">
         <button class="btn btn-scan" id="scanBtn" onclick="scanOCR()">🔍 วิเคราะห์บัตร</button>
@@ -262,75 +331,53 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     </div>
   </div>
 
-  <!-- RIGHT -->
+  <!-- RIGHT: FORM -->
   <div>
     <div class="card">
-      <div class="card-title"><span>📋</span> ข้อมูลบัตร & งาน</div>
+      <div class="card-title"><i>📋</i> ข้อมูลบัตร & งาน</div>
       <div class="fields-grid">
-
         <div class="section-label">ข้อมูลจากบัตร (OCR)</div>
-
-        <div class="field full">
-          <label>ชื่อลูกค้า (จากบัตร)</label>
-          <input type="text" id="f_fullname" placeholder="ยังไม่ได้สแกน">
-        </div>
-        <div class="field full">
-          <label>ที่อยู่</label>
-          <textarea id="f_address" placeholder="ยังไม่ได้สแกน" rows="2"></textarea>
-        </div>
-
+        <div class="field full"><label>ชื่อลูกค้า</label><input type="text" id="f_fullname" placeholder="ยังไม่ได้สแกน"></div>
+        <div class="field full"><label>ที่อยู่</label><textarea id="f_address" placeholder="ยังไม่ได้สแกน" rows="2"></textarea></div>
         <hr class="divider">
         <div class="section-label">ข้อมูลเพิ่มเติม</div>
-
-        <div class="field full">
-          <label>ชื่อผู้รับงาน</label>
-          <input type="text" id="f_assignee" placeholder="ชื่อพนักงาน / หน่วยงาน">
-        </div>
-        <div class="field">
-          <label>รหัสไปรษณีย์</label>
-          <input type="text" id="f_postcode" placeholder="10000" maxlength="5" inputmode="numeric">
-        </div>
-        <div class="field">
-          <label>เบอร์โทร</label>
-          <input type="tel" id="f_phone" placeholder="0896113186" maxlength="12" inputmode="tel">
-        </div>
-        <div class="field">
-          <label>จำนวน (ฉบับ)</label>
-          <input type="number" id="f_qty" placeholder="1" min="1" value="1">
-        </div>
-        <div class="field">
-          <label>หมายเหตุ</label>
-          <input type="text" id="f_note" placeholder="ข้อมูลเพิ่มเติม">
-        </div>
+        <div class="field full"><label>ชื่อผู้รับงาน</label><input type="text" id="f_assignee" placeholder="ชื่อพนักงาน / หน่วยงาน"></div>
+        <div class="field"><label>รหัสไปรษณีย์</label><input type="text" id="f_postcode" placeholder="10000" maxlength="5" inputmode="numeric"></div>
+        <div class="field"><label>เบอร์โทร</label><input type="tel" id="f_phone" placeholder="089-6113186" maxlength="12"></div>
+        <div class="field"><label>จำนวน (ฉบับ)</label><input type="number" id="f_qty" value="1" min="1"></div>
+        <div class="field"><label>หมายเหตุ</label><input type="text" id="f_note" placeholder="ข้อมูลเพิ่มเติม"></div>
       </div>
-
       <button class="btn-submit" id="submitBtn" onclick="submitToSheet()">
-        <span id="submitIcon">📤</span>
-        <span id="submitLabel">บันทึกลง Google Sheets</span>
+        <span id="submitIcon">📤</span><span id="submitLabel">บันทึกลง Google Sheets</span>
       </button>
     </div>
   </div>
 
-  <!-- SHEET CONFIG -->
-  <div style="grid-column:1/-1;">
+  <!-- CONFIG (HIDDEN BY DEFAULT) -->
+  <div style="grid-column:1/-1;" class="config-section" id="configSection">
     <div class="card">
-      <div class="card-title"><span>⚙️</span> ตั้งค่า Google Sheets</div>
-      <div class="sheet-config">
-        <div class="sheet-row">
-          <div class="field" style="flex:2">
-            <label>Google Apps Script Web App URL</label>
-            <input type="url" id="sheetUrl" placeholder="https://script.google.com/macros/s/XXXXXXXX/exec" oninput="saveConfig()">
-          </div>
-          <div class="field">
-            <label>ชื่อ Sheet</label>
-            <input type="text" id="sheetName" placeholder="Sheet1" value="Sheet1" oninput="saveConfig()">
-          </div>
-          <button class="btn btn-clear" style="margin-bottom:1px;" onclick="testSheet()">🔗 ทดสอบ</button>
+      <div class="card-title"><i>⚙️</i> ตั้งค่าระบบ</div>
+
+      <div class="config-block">
+        <div class="config-label">🔍 OCR.space API Key</div>
+        <div class="config-row">
+          <div class="field"><label>API Key</label><input type="password" id="ocrKey" placeholder="K8xxxxxxxxxxxxxxxxxxxxxxxxxxxxx" oninput="saveConfig()" autocomplete="off"></div>
+          <button class="btn btn-test" onclick="testOcr()">🔑 ทดสอบ</button>
         </div>
-        <div class="sheet-status" id="sheetStatus"></div>
-        <div style="margin-top:10px;font-size:11px;color:var(--muted);line-height:1.8;">
-          ⚠️ กล้องต้องเปิดผ่าน <strong style="color:var(--text)">https://</strong> เท่านั้น (GitHub Pages / Live Server / ngrok)
+        <div class="status-pill" id="ocrPill"></div>
+        <div class="config-note">
+          💡 สมัครฟรีที่ <a href="https://ocr.space/ocrapi/freekey" target="_blank">ocr.space/ocrapi/freekey</a> → กรอก Email → รับ Key ทางอีเมล (ฟรี 500 ครั้ง/วัน)
         </div>
+      </div>
+
+      <div class="config-block">
+        <div class="config-label">📊 Google Sheets</div>
+        <div class="config-row">
+          <div class="field" style="flex:2"><label>Apps Script URL</label><input type="url" id="sheetUrl" placeholder="https://script.google.com/macros/s/XXXX/exec" oninput="saveConfig()"></div>
+          <div class="field"><label>Sheet Name</label><input type="text" id="sheetName" value="Sheet1" oninput="saveConfig()"></div>
+          <button class="btn btn-test" onclick="testSheet()">🔗 ทดสอบ</button>
+        </div>
+        <div class="status-pill" id="sheetPill"></div>
       </div>
     </div>
   </div>
@@ -339,214 +386,482 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   <div class="history-wrap">
     <div class="card">
       <div class="card-title">
-        <span>📊</span> ประวัติการบันทึก
-        <span class="count-badge" id="historyCount">0</span>
-        <button class="btn btn-clear" style="margin-left:auto;padding:5px 12px;font-size:12px;" onclick="clearHistory()">ล้าง</button>
+        <i>📊</i> ประวัติการบันทึก
+        <span class="count-badge" id="histCount">0</span>
+        <button class="btn btn-ghost" style="margin-left:auto;padding:5px 12px;font-size:12px;" onclick="clearHistory()">ล้าง</button>
       </div>
-      <div id="historyBody"><div class="empty-history">ยังไม่มีประวัติการบันทึก</div></div>
+      <div id="histBody"><div class="empty-history">ยังไม่มีประวัติการบันทึก</div></div>
     </div>
   </div>
-
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-let selectedFile = null;
-let history = JSON.parse(localStorage.getItem('ocr_history') || '[]');
-renderHistory();
-loadConfig();
+/* ══════════════════════════════════════
+   CONFIGURATION SYSTEM
+══════════════════════════════════════ */
+// ฝังค่าเริ่มต้น (แก้ไขตรงนี้ได้)
+const DEFAULT_CONFIG = {
+  ocrKey: 'K87899142372222',  // ← ฝังค่า API Key ที่นี่
+  sheetUrl: 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec',  // ← ฝังค่า Apps Script URL ที่นี่
+  sheetName: 'Sheet1'
+};
 
-/* IMAGE */
-function loadImage(e) {
+let configClickCount = 0;
+let configClickTimer = null;
+
+function toggleConfig() {
+  configClickCount++;
+  
+  // รีเซ็ต counter หลังจาก 1 วินาที
+  clearTimeout(configClickTimer);
+  configClickTimer = setTimeout(() => {
+    configClickCount = 0;
+  }, 1000);
+  
+  // ถ้ากดครบ 5 ครั้ง ให้แสดงการตั้งค่า
+  if (configClickCount >= 5) {
+    const configSection = document.getElementById('configSection');
+    configSection.classList.toggle('visible');
+    configClickCount = 0;
+    
+    if (configSection.classList.contains('visible')) {
+      toast('⚙️ เปิดการตั้งค่าระบบ', 'success');
+      // Scroll ไปที่ส่วนการตั้งค่า
+      setTimeout(() => configSection.scrollIntoView({ behavior: 'smooth' }), 100);
+    } else {
+      toast('⚙️ ปิดการตั้งค่าระบบ', 'success');
+    }
+  }
+}
+
+/* ══════════════════════════════════════
+   CAMERA ENGINE — getUserMedia (FIXED)
+══════════════════════════════════════ */
+let stream = null;
+let facingMode = 'environment';
+let selectedFile = null;
+let cameraPermissionDenied = false;
+
+function onPreviewClick() {
+  if (!document.getElementById('previewArea').classList.contains('has-image')) openCamera();
+}
+
+async function openCamera() {
+  const modal = document.getElementById('cameraModal');
+  modal.classList.add('open');
+  
+  if (cameraPermissionDenied) {
+    toast('❌ กรุณาอนุญาตกล้องในการตั้งค่าเบราว์เซอร์ แล้วลองใหม่', 'error');
+    closeCamera();
+    return;
+  }
+  
+  await startStream();
+}
+
+async function startStream() {
+  if (stream) { 
+    stream.getTracks().forEach(t => t.stop()); 
+    stream = null; 
+  }
+
+  try {
+    const constraints = {
+      video: {
+        facingMode: { ideal: facingMode },
+        width:  { ideal: 1920 },
+        height: { ideal: 1080 },
+        focusMode: { ideal: 'continuous' }
+      },
+      audio: false
+    };
+
+    stream = await navigator.mediaDevices.getUserMedia(constraints);
+    const video = document.getElementById('videoEl');
+    video.srcObject = stream;
+
+    video.className = facingMode === 'user' ? 'mirrored' : '';
+
+    updateCameraStatus();
+
+    await new Promise(r => video.onloadedmetadata = r);
+    video.play();
+    updateDimOverlay();
+    
+    cameraPermissionDenied = false;
+    toast('✅ เปิดกล้องสำเร็จ', 'success');
+
+  } catch(err) {
+    console.error('Camera error:', err);
+    closeCamera();
+    
+    if (err.name === 'NotAllowedError') {
+      cameraPermissionDenied = true;
+      toast('❌ ปฏิเสธสิทธิ์กล้อง — เปิดการตั้งค่าเบราว์เซอร์เพื่ออนุญาต', 'error');
+    } else if (err.name === 'NotFoundError') {
+      toast('❌ ไม่พบกล้องในอุปกรณ์ — ลองเลือกจากคลังภาพแทน', 'error');
+    } else if (err.name === 'NotReadableError') {
+      toast('❌ กล้องถูกใช้งานโดยแอปพลิเคชันอื่น — ปิดแล้วลองใหม่', 'error');
+    } else if (err.name === 'OverconstrainedError') {
+      console.warn('Retrying without focusMode...');
+      const simpleConstraints = {
+        video: {
+          facingMode: { ideal: facingMode },
+          width:  { ideal: 1920 },
+          height: { ideal: 1080 }
+        },
+        audio: false
+      };
+      try {
+        stream = await navigator.mediaDevices.getUserMedia(simpleConstraints);
+        const video = document.getElementById('videoEl');
+        video.srcObject = stream;
+        video.className = facingMode === 'user' ? 'mirrored' : '';
+        updateCameraStatus();
+        await new Promise(r => video.onloadedmetadata = r);
+        video.play();
+        updateDimOverlay();
+        toast('✅ เปิดกล้องสำเร็จ', 'success');
+      } catch(retryErr) {
+        toast('❌ เปิดกล้องไม่ได้: ' + retryErr.message, 'error');
+      }
+    } else {
+      toast('❌ เปิดกล้องไม่ได้: ' + err.message, 'error');
+    }
+  }
+}
+
+function updateCameraStatus() {
+  const statusText = document.getElementById('camStatusText');
+  const flipBtn = document.getElementById('flipBtn');
+  
+  if (facingMode === 'user') {
+    statusText.textContent = '📱 กล้องหน้า';
+    flipBtn.classList.add('active');
+  } else {
+    statusText.textContent = '📷 กล้องหลัง';
+    flipBtn.classList.remove('active');
+  }
+}
+
+async function flipCamera() {
+  facingMode = facingMode === 'environment' ? 'user' : 'environment';
+  await startStream();
+}
+
+function closeCamera() {
+  if (stream) { 
+    stream.getTracks().forEach(t => t.stop()); 
+    stream = null; 
+  }
+  document.getElementById('cameraModal').classList.remove('open');
+}
+
+function updateDimOverlay() {
+  const frame = document.getElementById('camFrame');
+  const rect  = frame.getBoundingClientRect();
+  const vw = window.innerWidth, vh = window.innerHeight;
+
+  document.getElementById('dimTop').style.height    = rect.top  + 'px';
+  document.getElementById('dimBottom').style.height = (vh - rect.bottom) + 'px';
+  document.getElementById('dimLeft').style.cssText  =
+    `top:${rect.top}px;height:${rect.height}px;width:${rect.left}px;`;
+  document.getElementById('dimRight').style.cssText =
+    `top:${rect.top}px;height:${rect.height}px;width:${vw - rect.right}px;`;
+}
+window.addEventListener('resize', updateDimOverlay);
+
+function capturePhoto() {
+  const video  = document.getElementById('videoEl');
+  const canvas = document.getElementById('snapCanvas');
+  const frame  = document.getElementById('camFrame');
+  const vRect  = video.getBoundingClientRect();
+  const fRect  = frame.getBoundingClientRect();
+
+  const scaleX = video.videoWidth  / vRect.width;
+  const scaleY = video.videoHeight / vRect.height;
+
+  const cropX = (fRect.left - vRect.left) * scaleX;
+  const cropY = (fRect.top  - vRect.top)  * scaleY;
+  const cropW = fRect.width  * scaleX;
+  const cropH = fRect.height * scaleY;
+
+  canvas.width  = cropW;
+  canvas.height = cropH;
+
+  const ctx = canvas.getContext('2d');
+
+  if (facingMode === 'user') {
+    ctx.save();
+    ctx.translate(cropW, 0);
+    ctx.scale(-1, 1);
+    ctx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+    ctx.restore();
+  } else {
+    ctx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+  }
+
+  canvas.toBlob(blob => {
+    selectedFile = new File([blob], 'id_card.jpg', { type: 'image/jpeg' });
+    const url = URL.createObjectURL(blob);
+    showPreview(url);
+    closeCamera();
+    toast('📸 ถ่ายรูปสำเร็จ! กด วิเคราะห์บัตร ได้เลย', 'success');
+  }, 'image/jpeg', 0.95);
+}
+
+/* ══════════════════════════════════════
+   GALLERY FALLBACK
+══════════════════════════════════════ */
+document.getElementById('galleryInput').addEventListener('change', e => {
   const file = e.target.files[0];
   if (!file) return;
   selectedFile = file;
-  const reader = new FileReader();
-  reader.onload = () => {
-    const img = document.getElementById('previewImg');
-    img.src = reader.result; img.style.display = 'block';
-    document.getElementById('placeholderIcon').style.display = 'none';
-    document.getElementById('placeholderText').style.display = 'none';
-    document.getElementById('previewArea').classList.add('has-image');
-  };
-  reader.readAsDataURL(file);
-}
-document.getElementById('cameraInput').addEventListener('change', loadImage);
-document.getElementById('galleryInput').addEventListener('change', loadImage);
+  showPreview(URL.createObjectURL(file));
+});
 
-function clearImage() {
+function showPreview(url) {
+  const img = document.getElementById('previewImg');
+  img.src = url; img.style.display = 'block';
+  document.getElementById('phIcon').style.display = 'none';
+  document.getElementById('phText').style.display = 'none';
+  document.getElementById('previewArea').classList.add('has-image');
+}
+
+function clearAll() {
   selectedFile = null;
   const img = document.getElementById('previewImg');
   img.src = ''; img.style.display = 'none';
-  document.getElementById('placeholderIcon').style.display = '';
-  document.getElementById('placeholderText').style.display = '';
+  document.getElementById('phIcon').style.display = '';
+  document.getElementById('phText').style.display = '';
   document.getElementById('previewArea').classList.remove('has-image');
-  document.getElementById('cameraInput').value = '';
   document.getElementById('galleryInput').value = '';
-  document.getElementById('progressBar').style.width = '0%';
+  const bar = document.getElementById('progressBar');
+  bar.style.width = '0%'; bar.classList.remove('animating');
   document.getElementById('statusText').textContent = 'พร้อมทำงาน';
 }
 
-/* OCR */
+/* ══════════════════════════════════════
+   OCR.space
+══════════════════════════════════════ */
 async function scanOCR() {
-  if (!selectedFile) { toast('กรุณาเลือกหรือถ่ายรูปบัตรก่อน', 'error'); return; }
+  if (!selectedFile) { toast('กรุณาถ่ายรูปหรือเลือกภาพก่อน', 'error'); return; }
+  const key = document.getElementById('ocrKey').value.trim();
+  if (!key) { toast('กรุณากรอก OCR.space API Key ก่อน', 'error'); return; }
+
   const btn = document.getElementById('scanBtn');
   btn.disabled = true;
   btn.innerHTML = '<div class="spinner"></div> กำลังวิเคราะห์...';
-  document.getElementById('f_fullname').value = '';
-  document.getElementById('f_address').value = '';
-  document.getElementById('progressBar').style.width = '0%';
+
+  const bar = document.getElementById('progressBar');
+  bar.style.width = '0%'; bar.classList.add('animating');
+  setStatus('กำลังส่งรูปให้ OCR.space...');
+
   try {
-    const { data: { text } } = await Tesseract.recognize(selectedFile, 'tha+eng', {
-      logger: m => {
-        if (m.progress) document.getElementById('progressBar').style.width = (m.progress*100)+'%';
-        if (m.status)   document.getElementById('statusText').textContent = m.status;
-      }
-    });
-    const r = extractThaiID(text);
-    setField('f_fullname', r.fullname);
-    setField('f_address',  r.address);
-    document.getElementById('statusText').textContent = '✅ วิเคราะห์สำเร็จ';
-    toast('OCR สำเร็จ! ตรวจสอบข้อมูลก่อนบันทึก', 'success');
-  } catch(err) {
-    document.getElementById('statusText').textContent = '❌ เกิดข้อผิดพลาด';
-    toast('OCR ล้มเหลว: ' + err.message, 'error');
+    const fd = new FormData();
+    fd.append('file', selectedFile);
+    fd.append('apikey', key);
+    fd.append('language', 'tha');
+    fd.append('isOverlayRequired', 'false');
+    fd.append('detectOrientation', 'true');
+    fd.append('scale', 'true');
+    fd.append('OCREngine', '2');
+
+    const res  = await fetch('https://api.ocr.space/parse/image', { method:'POST', body:fd });
+    const data = await res.json();
+
+    if (data.IsErroredOnProcessing) throw new Error(data.ErrorMessage?.[0] || 'OCR Error');
+
+    const raw = data.ParsedResults?.[0]?.ParsedText || '';
+    if (!raw.trim()) throw new Error('ไม่พบข้อความในรูป — ลองถ่ายใหม่ให้ชัดขึ้น');
+
+    const result = extractID(raw);
+    bar.classList.remove('animating'); bar.style.width = '100%';
+    setStatus('✅ วิเคราะห์สำเร็จ');
+    setField('f_fullname', result.fullname);
+    setField('f_address',  result.address);
+    toast('✅ OCR สำเร็จ! ตรวจสอบข้อมูลก่อนบันทึก', 'success');
+
+  } catch(e) {
+    bar.classList.remove('animating'); bar.style.width = '0%';
+    setStatus('❌ ' + e.message);
+    toast('❌ ' + e.message, 'error');
   }
+
   btn.disabled = false;
   btn.innerHTML = '🔍 วิเคราะห์บัตร';
 }
 
+function extractID(text) {
+  const lines = text.split('\n').map(x => x.trim()).filter(x => x);
+  let fullname = '', address = '';
+
+  for (let i = 0; i < lines.length; i++) {
+    let line = lines[i]
+      .replace(/ชื่อ(ตัว|และ|ตัวและ)?(ชื่อ)?(สกุล|เอก)?/g,'')
+      .replace(/Name|Last\s*name/gi,'').replace(/\bUN\b/g,'นาง').trim();
+
+    let m;
+    m = line.match(/(นาย|นางสาว|นาง)\s+[ก-๙]+\s+[ก-๙]+/);
+    if (m) { fullname = m[0].trim(); break; }
+    m = line.match(/(น\.?ส\.?|ด\.?ช\.?|ด\.?ญ\.?)\s*[ก-๙]+\s+[ก-๙]+/);
+    if (m) {
+      fullname = m[0]
+        .replace(/น\.?ส\.?/,'นางสาว ').replace(/ด\.?ช\.?/,'เด็กชาย ').replace(/ด\.?ญ\.?/,'เด็กหญิง ')
+        .replace(/\s+/,' ').trim();
+      break;
+    }
+    if (/^(Miss|Mr\.?|Mrs\.?)\s/i.test(line) && i > 0) {
+      const prev = lines[i-1].replace(/ชื่อ.*|Name.*/gi,'').trim();
+      if (/[ก-๙]{2,}\s+[ก-๙]{2,}/.test(prev)) { fullname = prev; break; }
+    }
+    m = line.match(/[ก-๙]{2,}\s+[ก-๙]{2,}/);
+    if (m && !/\d/.test(line) && !/(หมู่|ตำบล|อำเภอ|จังหวัด|ถนน|ซอย)/.test(line)) {
+      fullname = m[0].trim(); break;
+    }
+  }
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const isAddr = /\d+\/?\d*/.test(line) &&
+      /(หมู่|ซ\.|ซอย|ต\.|ตำบล|อ\.|อำเภอ|จ\.|จังหวัด|แขวง|เขต)/.test(line);
+    if (isAddr) {
+      let parts = [line];
+      for (let j = i+1; j < Math.min(i+3, lines.length); j++) {
+        if (!lines[j] || /(วัน|Date|เกิด|\d{4}.*\d{4})/.test(lines[j])) break;
+        if (/(หมู่|ตำบล|อำเภอ|จังหวัด|แขวง|เขต|\d{5})/.test(lines[j])) parts.push(lines[j]);
+      }
+      address = parts.join(' ').replace(/\s+/g,' ').trim(); break;
+    }
+  }
+
+  return { fullname, address };
+}
+
+/* ══════════════════════════════════════
+   HELPERS
+══════════════════════════════════════ */
+function setStatus(t) { document.getElementById('statusText').textContent = t; }
 function setField(id, val) {
   const el = document.getElementById(id);
   el.value = val || '';
   if (val) { el.classList.add('ocr-highlight'); setTimeout(() => el.classList.remove('ocr-highlight'), 2500); }
 }
-
-function extractThaiID(text) {
-  const lines = text.split('\n').map(x => x.trim()).filter(x => x !== '');
-  let fullname = '', address = '';
-  for (let i = 0; i < lines.length; i++) {
-    let line = lines[i]
-      .replace('ชื่อและชื่อสกุล','').replace('ชื่อตัวและชื่อเอก','')
-      .replace('ชื่อตัว','').replace('Name','').replace('Last name','')
-      .replace('UN','นาง').trim();
-    let thai = line.match(/(นาย|นาง|นางสาว)\s+[ก-๙]+\s+[ก-๙]+/);
-    if (thai) { fullname = thai[0]; break; }
-  }
-  for (let i = 0; i < lines.length; i++) {
-    let line = lines[i];
-    if (/\d+\/\d+/.test(line) || line.includes('หมู่')) {
-      let addr = [];
-      for (let j = i; j < i+3; j++) {
-        if (!lines[j]) continue;
-        if (lines[j].includes('2559')||lines[j].includes('Date')||lines[j].includes('วัน')) break;
-        addr.push(lines[j]);
-      }
-      address = addr.join(' ').replace(/[=~fw)J]/g,'').replace(/\s+/g,' ').trim();
-      break;
-    }
-  }
-  fullname = fullname.replace(/\bUN\b/g,'นาง').replace(/\s+/g,' ').trim();
-  return { fullname: fullname||'', address: address||'' };
-}
-
-/* PHONE FORMAT */
-function formatPhone(phone) {
-  if (!phone) return '';
-  let p = String(phone).replace(/\D/g,'');
-  if (p.length === 9)  return p.slice(0,2)+'-'+p.slice(2,5)+'-'+p.slice(5);
-  if (p.length === 10) return p.slice(0,3)+'-'+p.slice(3,7)+'-'+p.slice(7);
+function fmtPhone(p) {
+  if (!p) return '';
+  const d = p.replace(/\D/g,'');
+  if (d.length===9)  return d.slice(0,2)+'-'+d.slice(2,5)+'-'+d.slice(5);
+  if (d.length===10) return d.slice(0,3)+'-'+d.slice(3,7)+'-'+d.slice(7);
   return p;
 }
 
-/* SHEETS */
+/* ══════════════════════════════════════
+   CONFIG
+══════════════════════════════════════ */
 function saveConfig() {
-  localStorage.setItem('ocr_sheet_url',  document.getElementById('sheetUrl').value);
-  localStorage.setItem('ocr_sheet_name', document.getElementById('sheetName').value);
+  localStorage.setItem('ocr_key',   document.getElementById('ocrKey').value);
+  localStorage.setItem('sheet_url', document.getElementById('sheetUrl').value);
+  localStorage.setItem('sheet_nm',  document.getElementById('sheetName').value);
 }
 function loadConfig() {
-  document.getElementById('sheetUrl').value  = localStorage.getItem('ocr_sheet_url')  || '';
-  document.getElementById('sheetName').value = localStorage.getItem('ocr_sheet_name') || 'Sheet1';
+  // ใช้ค่าจาก localStorage หรือค่าเริ่มต้นจาก DEFAULT_CONFIG
+  document.getElementById('ocrKey').value   = localStorage.getItem('ocr_key')   || DEFAULT_CONFIG.ocrKey;
+  document.getElementById('sheetUrl').value = localStorage.getItem('sheet_url') || DEFAULT_CONFIG.sheetUrl;
+  document.getElementById('sheetName').value= localStorage.getItem('sheet_nm')  || DEFAULT_CONFIG.sheetName;
+}
+async function testOcr() {
+  const key = document.getElementById('ocrKey').value.trim();
+  if (!key) { pill('ocrPill','กรุณากรอก Key ก่อน','err'); return; }
+  pill('ocrPill','กำลังทดสอบ...','warn');
+  try {
+    const fd = new FormData();
+    fd.append('apikey', key); fd.append('url','https://i.imgur.com/viiMM6A.png'); fd.append('language','eng');
+    const r = await fetch('https://api.ocr.space/parse/image',{method:'POST',body:fd});
+    const d = await r.json();
+    pill('ocrPill', d.OCRExitCode===6 ? '❌ API Key ไม่ถูกต้อง' : '✅ API Key ใช้งานได้!',
+         d.OCRExitCode===6 ? 'err' : 'ok');
+  } catch(e) { pill('ocrPill','❌ '+e.message,'err'); }
 }
 async function testSheet() {
   const url = document.getElementById('sheetUrl').value.trim();
-  if (!url) { showSheetStatus('กรุณากรอก URL ก่อน', false); return; }
-  showSheetStatus('กำลังทดสอบ...', null);
+  if (!url) { pill('sheetPill','กรุณากรอก URL ก่อน','err'); return; }
+  pill('sheetPill','กำลังทดสอบ...','warn');
   try {
-    await fetch(url, { method:'GET', mode:'no-cors' });
-    showSheetStatus('✅ เชื่อมต่อได้ — ลองบันทึกข้อมูลจริงเพื่อยืนยัน', true);
-  } catch(e) {
-    showSheetStatus('❌ เชื่อมต่อไม่ได้: ' + e.message, false);
-  }
+    await fetch(url,{method:'GET',mode:'no-cors'});
+    pill('sheetPill','✅ เชื่อมต่อได้','ok');
+  } catch(e) { pill('sheetPill','❌ '+e.message,'err'); }
 }
-function showSheetStatus(msg, ok) {
-  const el = document.getElementById('sheetStatus');
+function pill(id, msg, type) {
+  const el = document.getElementById(id);
   el.textContent = msg;
-  el.className = 'sheet-status '+(ok===true?'sheet-ok':ok===false?'sheet-err':'');
+  el.className = 'status-pill pill-'+type;
   el.style.display = 'block';
 }
 
-/* SUBMIT */
+/* ══════════════════════════════════════
+   SUBMIT
+══════════════════════════════════════ */
 async function submitToSheet() {
   const url = document.getElementById('sheetUrl').value.trim();
   const payload = {
-    sheet:    document.getElementById('sheetName').value || 'Sheet1',
+    sheet:    document.getElementById('sheetName').value||'Sheet1',
     fullname: document.getElementById('f_fullname').value,
     address:  document.getElementById('f_address').value,
     assignee: document.getElementById('f_assignee').value,
     postcode: document.getElementById('f_postcode').value,
-    phone:    formatPhone(document.getElementById('f_phone').value),
-    qty:      document.getElementById('f_qty').value || 1,
+    phone:    fmtPhone(document.getElementById('f_phone').value),
+    qty:      document.getElementById('f_qty').value||1,
     note:     document.getElementById('f_note').value,
   };
-  if (!payload.fullname && !payload.assignee) {
-    toast('กรุณากรอกข้อมูลอย่างน้อย ชื่อลูกค้าหรือผู้รับงาน', 'error'); return;
-  }
+  if (!payload.fullname && !payload.assignee) { toast('กรุณากรอกข้อมูลอย่างน้อยหนึ่งช่อง','error'); return; }
+
   const btn = document.getElementById('submitBtn');
   document.getElementById('submitIcon').textContent = '';
   document.getElementById('submitLabel').textContent = 'กำลังบันทึก...';
   btn.disabled = true;
-  btn.insertAdjacentHTML('afterbegin','<div class="spinner" style="position:absolute;left:20px"></div>');
-  const record = { ...payload, time: new Date().toLocaleString('th-TH'), status:'pending' };
+  btn.insertAdjacentHTML('afterbegin','<div class="spinner" style="position:absolute;left:18px"></div>');
+
+  const rec = { ...payload, time: new Date().toLocaleString('th-TH'), status:'pending' };
+
   if (url) {
     try {
-      await fetch(url, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
-      record.status = 'ok';
-      toast('✅ บันทึกลง Google Sheets สำเร็จ!', 'success');
-    } catch(e) {
-      record.status = 'error';
-      toast('❌ บันทึกไม่สำเร็จ: ' + e.message, 'error');
-    }
+      await fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+      rec.status = 'ok'; toast('✅ บันทึกสำเร็จ!','success');
+    } catch(e) { rec.status = 'error'; toast('❌ '+e.message,'error'); }
   } else {
-    record.status = 'local';
-    toast('💾 บันทึกเฉพาะในเครื่อง (ยังไม่ได้ตั้งค่า Sheet URL)', 'success');
+    rec.status = 'local'; toast('💾 บันทึกในเครื่อง (ยังไม่ตั้งค่า Sheet)','success');
   }
-  history.unshift(record);
-  localStorage.setItem('ocr_history', JSON.stringify(history.slice(0,50)));
-  renderHistory();
+
+  let hist = JSON.parse(localStorage.getItem('ocr_hist')||'[]');
+  hist.unshift(rec);
+  localStorage.setItem('ocr_hist', JSON.stringify(hist.slice(0,50)));
+  renderHist();
+
   btn.querySelector('.spinner')?.remove();
   document.getElementById('submitIcon').textContent = '📤';
   document.getElementById('submitLabel').textContent = 'บันทึกลง Google Sheets';
   btn.disabled = false;
 }
 
-/* HISTORY */
-function renderHistory() {
-  const el = document.getElementById('historyBody');
-  document.getElementById('historyCount').textContent = history.length;
-  if (!history.length) { el.innerHTML = '<div class="empty-history">ยังไม่มีประวัติการบันทึก</div>'; return; }
-  const rows = history.slice(0,20).map(r => {
-    const tag = r.status==='ok'    ? '<span class="tag tag-ok">✓ สำเร็จ</span>'
+/* ══════════════════════════════════════
+   HISTORY
+══════════════════════════════════════ */
+function renderHist() {
+  const hist = JSON.parse(localStorage.getItem('ocr_hist')||'[]');
+  document.getElementById('histCount').textContent = hist.length;
+  const el = document.getElementById('histBody');
+  if (!hist.length) { el.innerHTML='<div class="empty-history">ยังไม่มีประวัติ</div>'; return; }
+  const rows = hist.slice(0,20).map(r => {
+    const tag = r.status==='ok' ? '<span class="tag tag-ok">✓ สำเร็จ</span>'
               : r.status==='error' ? '<span class="tag tag-err">✗ ผิดพลาด</span>'
-              : r.status==='local' ? '<span class="tag tag-pen">💾 ในเครื่อง</span>'
-              :                      '<span class="tag tag-pen">⏳ รอ</span>';
+              : '<span class="tag tag-pen">💾 ในเครื่อง</span>';
     return `<tr>
       <td style="color:var(--muted);font-size:12px">${r.time}</td>
       <td>${r.fullname||'—'}</td><td>${r.assignee||'—'}</td>
-      <td style="text-align:center">${r.qty||'1'}</td>
-      <td>${r.phone||'—'}</td><td>${tag}</td>
-    </tr>`;
+      <td style="text-align:center">${r.qty||1}</td>
+      <td>${r.phone||'—'}</td><td>${tag}</td></tr>`;
   }).join('');
   el.innerHTML = `<table class="history-table">
     <thead><tr><th>เวลา</th><th>ชื่อลูกค้า</th><th>ผู้รับงาน</th><th>จำนวน</th><th>เบอร์โทร</th><th>สถานะ</th></tr></thead>
@@ -554,122 +869,20 @@ function renderHistory() {
 }
 function clearHistory() {
   if (!confirm('ลบประวัติทั้งหมด?')) return;
-  history = []; localStorage.removeItem('ocr_history'); renderHistory();
+  localStorage.removeItem('ocr_hist'); renderHist();
 }
 
-/* TOAST */
+/* ── TOAST ── */
 function toast(msg, type='success') {
   const el = document.getElementById('toast');
   el.innerHTML = `<span>${type==='success'?'✅':'❌'}</span><span>${msg}</span>`;
   el.className = `toast ${type} show`;
-  setTimeout(() => el.classList.remove('show'), 3200);
-}
-/* ===== CAMERA getUserMedia ===== */
-let cameraStream = null;
-let facingMode = 'environment';
-let useFallback = false;
-
-function showCameraStatus(msg) {
-  const el = document.getElementById('cameraStatus');
-  el.textContent = msg;
-  el.style.display = 'block';
-  setTimeout(() => el.style.display = 'none', 2500);
+  setTimeout(() => el.classList.remove('show'), 3500);
 }
 
-async function openCamera() {
-  // ลอง getUserMedia ก่อน
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    useFallback = true;
-    document.getElementById('cameraInput').click();
-    return;
-  }
-  const overlay = document.getElementById('cameraOverlay');
-  const video = document.getElementById('cameraVideo');
-  overlay.style.display = 'flex';
-  showCameraStatus('กำลังเปิดกล้อง...');
-  try {
-    if (cameraStream) {
-      cameraStream.getTracks().forEach(t => t.stop());
-    }
-    const constraints = {
-      video: {
-        facingMode: { ideal: facingMode },
-        width: { ideal: 1920 },
-        height: { ideal: 1080 }
-      },
-      audio: false
-    };
-    cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
-    video.srcObject = cameraStream;
-    await video.play();
-    showCameraStatus('กล้องพร้อมใช้งาน');
-  } catch (err) {
-    console.error('Camera error:', err);
-    showCameraStatus('ไม่สามารถเปิดกล้อง: ' + err.name);
-    // fallback ไปยัง input file
-    setTimeout(() => {
-      closeCamera();
-      useFallback = true;
-      document.getElementById('cameraInput').click();
-    }, 1200);
-  }
-}
-
-function closeCamera() {
-  const overlay = document.getElementById('cameraOverlay');
-  const video = document.getElementById('cameraVideo');
-  if (cameraStream) {
-    cameraStream.getTracks().forEach(t => t.stop());
-    cameraStream = null;
-  }
-  video.srcObject = null;
-  overlay.style.display = 'none';
-}
-
-function flipCamera() {
-  facingMode = facingMode === 'environment' ? 'user' : 'environment';
-  openCamera();
-}
-
-function snapPhoto() {
-  const video = document.getElementById('cameraVideo');
-  const canvas = document.getElementById('cameraCanvas');
-  if (!video.videoWidth) {
-    showCameraStatus('รอให้กล้องพร้อม...');
-    return;
-  }
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-  const ctx = canvas.getContext('2d');
-  // ถ้าใช้กล้องหน้า (user) ต้อง flip กลับ
-  if (facingMode === 'user') {
-    ctx.translate(canvas.width, 0);
-    ctx.scale(-1, 1);
-  }
-  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-  canvas.toBlob((blob) => {
-    const file = new File([blob], 'camera-capture.jpg', { type: 'image/jpeg' });
-    selectedFile = file;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const img = document.getElementById('previewImg');
-      img.src = reader.result;
-      img.style.display = 'block';
-      document.getElementById('placeholderIcon').style.display = 'none';
-      document.getElementById('placeholderText').style.display = 'none';
-      document.getElementById('previewArea').classList.add('has-image');
-      closeCamera();
-      toast('ถ่ายรูปสำเร็จ!', 'success');
-    };
-    reader.readAsDataURL(file);
-  }, 'image/jpeg', 0.92);
-}
-
-// ปิดกล้องเมื่อกด Escape
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') closeCamera();
-});
+/* ── INIT ── */
+loadConfig();
+renderHist();
 </script>
 </body>
 </html>
