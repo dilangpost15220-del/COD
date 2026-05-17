@@ -755,7 +755,7 @@ $('btnSaveSheets').onclick = async () => {
     postcode: $('postalCode').value,
     phone: $('phone').value,
     qty: parseInt($('quantity').value) || 1,
-    time: new Date().toISOString(),
+    time: new Date().toLocaleString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', ''),
     status: 'pending'
   };
   
