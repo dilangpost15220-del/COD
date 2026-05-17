@@ -24,7 +24,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
 /* ── HEADER ── */
 .header{position:relative;z-index:1;padding:28px 24px 20px;display:flex;align-items:center;gap:16px;background:var(--surface);border-bottom:1px solid var(--border);box-shadow:var(--shadow-sm);}
-.header-icon{width:52px;height:52px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;box-shadow:0 4px 12px rgba(91,124,255,0.25);cursor:pointer;transition:.2s;user-select:none;}
+.header-icon{width:52px;height:52px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;box-shadow:0 4px 12px rgba(91,124,255,0.25);cursor:pointer;transition:.2s;}
 .header-icon:active{transform:scale(0.95);}
 .header-title{font-family:var(--heading);font-size:24px;font-weight:700;color:var(--text);}
 .header-sub{font-size:13px;color:var(--muted);margin-top:4px;}
@@ -48,9 +48,13 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   background:#000;flex-direction:column;align-items:center;justify-content:center;
 }
 #cameraModal.open{display:flex;}
-#videoEl{width:100%;height:100%;object-fit:cover;}
+#videoEl{
+  width:100%;height:100%;object-fit:cover;
+  transform:scaleX(1);
+}
 #videoEl.mirrored{transform:scaleX(-1);}
 
+/* กรอบเล็งบัตร */
 .cam-overlay{
   position:absolute;inset:0;
   display:flex;flex-direction:column;
@@ -58,39 +62,93 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   pointer-events:none;
 }
 .cam-frame{
-  width:min(88vw,520px);
+  width:min(88vw, 520px);
   aspect-ratio:85.6/54;
   position:relative;
   border:3px solid rgba(255,255,255,0.6);
   border-radius:12px;
-  box-shadow:inset 0 0 20px rgba(91,124,255,0.2),0 0 40px rgba(91,124,255,0.3);
+  box-shadow:inset 0 0 20px rgba(91,124,255,0.2), 0 0 40px rgba(91,124,255,0.3);
 }
-.cam-frame::before,.cam-frame::after,.cam-corner-bl,.cam-corner-br{content:'';position:absolute;width:40px;height:40px;border-color:#ffffff;border-style:solid;}
+/* มุมกรอบ */
+.cam-frame::before,.cam-frame::after,
+.cam-corner-bl,.cam-corner-br{
+  content:'';position:absolute;
+  width:40px;height:40px;
+  border-color:#ffffff;
+  border-style:solid;
+}
 .cam-frame::before{top:0;left:0;border-width:3px 0 0 3px;border-radius:6px 0 0 0;}
-.cam-frame::after{top:0;right:0;border-width:3px 3px 0 0;border-radius:0 6px 0 0;}
+.cam-frame::after {top:0;right:0;border-width:3px 3px 0 0;border-radius:0 6px 0 0;}
 .cam-corner-bl{bottom:0;left:0;border-width:0 0 3px 3px;border-radius:0 0 0 6px;}
 .cam-corner-br{bottom:0;right:0;border-width:0 3px 3px 0;border-radius:0 0 6px 0;}
-.scan-line{position:absolute;left:4px;right:4px;height:2px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.9),transparent);animation:scanMove 2.2s ease-in-out infinite;box-shadow:0 0 12px rgba(255,255,255,0.8);}
+
+/* scan line */
+.scan-line{
+  position:absolute;left:4px;right:4px;height:2px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.9),transparent);
+  animation:scanMove 2.2s ease-in-out infinite;
+  box-shadow:0 0 12px rgba(255,255,255,0.8);
+}
 @keyframes scanMove{0%,100%{top:4px}50%{top:calc(100% - 6px)}}
-.cam-dim-top,.cam-dim-bottom,.cam-dim-left,.cam-dim-right{position:absolute;background:rgba(0,0,0,0.6);}
-.cam-hint{color:rgba(255,255,255,.9);font-size:14px;font-family:var(--font);font-weight:500;margin-top:20px;text-align:center;letter-spacing:.3px;}
-.cam-bar{position:absolute;bottom:0;left:0;right:0;padding:24px 24px 40px;background:linear-gradient(transparent,rgba(0,0,0,0.9));display:flex;align-items:center;justify-content:space-between;gap:16px;}
-.cam-shutter{width:76px;height:76px;border-radius:50%;background:#fff;border:5px solid rgba(255,255,255,.3);cursor:pointer;transition:.15s;flex-shrink:0;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 8px rgba(255,255,255,.12);}
+
+/* dimmed area outside frame */
+.cam-dim-top,.cam-dim-bottom,.cam-dim-left,.cam-dim-right{
+  position:absolute;background:rgba(0,0,0,0.6);
+}
+.cam-hint{
+  color:rgba(255,255,255,.9);font-size:14px;font-family:var(--font);font-weight:500;
+  margin-top:20px;text-align:center;letter-spacing:.3px;
+}
+
+/* camera control bar */
+.cam-bar{
+  position:absolute;bottom:0;left:0;right:0;
+  padding:24px 24px 40px;
+  background:linear-gradient(transparent,rgba(0,0,0,0.9));
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+}
+.cam-shutter{
+  width:76px;height:76px;border-radius:50%;
+  background:#fff;border:5px solid rgba(255,255,255,.3);
+  cursor:pointer;transition:.15s;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 0 8px rgba(255,255,255,.12);
+}
 .cam-shutter:active{transform:scale(.92);}
 .cam-shutter-inner{width:60px;height:60px;border-radius:50%;background:#fff;}
-.cam-btn{background:rgba(255,255,255,.18);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.3);border-radius:14px;color:#fff;font-family:var(--font);font-size:14px;font-weight:600;padding:12px 18px;cursor:pointer;transition:.2s;display:flex;align-items:center;gap:7px;}
+.cam-btn{
+  background:rgba(255,255,255,.18);backdrop-filter:blur(10px);
+  border:1px solid rgba(255,255,255,.3);border-radius:14px;
+  color:#fff;font-family:var(--font);font-size:14px;font-weight:600;
+  padding:12px 18px;cursor:pointer;transition:.2s;
+  display:flex;align-items:center;gap:7px;
+}
 .cam-btn:hover{background:rgba(255,255,255,.25);}
 .cam-btn:active{transform:scale(.97);}
 .cam-btn.active{background:rgba(91,124,255,0.6);border-color:rgba(91,124,255,0.9);}
-.cam-top-bar{position:absolute;top:0;left:0;right:0;padding:20px 24px 16px;background:linear-gradient(rgba(0,0,0,.8),transparent);display:flex;align-items:center;justify-content:space-between;}
+.cam-top-bar{
+  position:absolute;top:0;left:0;right:0;padding:20px 24px 16px;
+  background:linear-gradient(rgba(0,0,0,.8),transparent);
+  display:flex;align-items:center;justify-content:space-between;
+}
 .cam-label{color:#fff;font-size:15px;font-weight:600;font-family:var(--font);}
 .cam-close{background:rgba(255,255,255,.15);border:none;color:#fff;font-size:20px;width:40px;height:40px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s;}
 .cam-close:hover{background:rgba(255,255,255,.25);}
-.cam-status{position:absolute;top:20px;left:24px;color:#fff;font-size:13px;font-weight:600;display:flex;align-items:center;gap:9px;background:rgba(0,0,0,0.5);padding:10px 14px;border-radius:24px;}
+
+/* camera status indicator */
+.cam-status{
+  position:absolute;top:20px;left:24px;color:#fff;font-size:13px;font-weight:600;
+  display:flex;align-items:center;gap:9px;
+  background:rgba(0,0,0,0.5);padding:10px 14px;border-radius:24px;
+}
 .cam-status-dot{width:8px;height:8px;border-radius:50%;background:#10b981;animation:pulse 2s infinite;}
 
 /* ── PREVIEW ── */
-.preview-area{height:260px;background:var(--surface3);border:2px dashed var(--border2);border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;overflow:hidden;position:relative;transition:.3s;cursor:pointer;}
+.preview-area{
+  height:260px;background:var(--surface3);border:2px dashed var(--border2);border-radius:16px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+  overflow:hidden;position:relative;transition:.3s;cursor:pointer;
+}
 .preview-area.has-image{border-style:solid;border-color:var(--accent);background:var(--accent-light);cursor:default;}
 .preview-area:not(.has-image):hover{border-color:var(--accent);background:rgba(91,124,255,0.04);}
 #previewImg{width:100%;height:100%;object-fit:contain;display:none;}
@@ -102,18 +160,18 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .btn{padding:11px 18px;border:none;border-radius:12px;cursor:pointer;font-family:var(--font);font-size:14px;font-weight:600;display:inline-flex;align-items:center;gap:7px;transition:.2s;white-space:nowrap;box-shadow:var(--shadow-sm);}
 .btn:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);}
 .btn:active{transform:translateY(0);}
-.btn-cam{background:linear-gradient(135deg,#5b7cff,#6b5cff);color:#fff;}
+.btn-cam   {background:linear-gradient(135deg,#5b7cff,#6b5cff);color:#fff;}
 .btn-gallery{background:linear-gradient(135deg,#8b5cf6,#a855f7);color:#fff;}
-.btn-scan{background:linear-gradient(135deg,#10b981,#059669);color:#fff;flex:1;justify-content:center;}
-.btn-ghost{background:var(--surface3);color:var(--text-secondary);border:1.5px solid var(--border);}
-.btn-test{background:var(--surface3);color:var(--text-secondary);border:1.5px solid var(--border);}
+.btn-scan  {background:linear-gradient(135deg,#10b981,#059669);color:#fff;flex:1;justify-content:center;}
+.btn-ghost {background:var(--surface3);color:var(--text-secondary);border:1.5px solid var(--border);}
+.btn-test  {background:var(--surface3);color:var(--text-secondary);border:1.5px solid var(--border);}
 
 /* ── PROGRESS ── */
 .progress-wrap{margin-top:14px;}
 .progress-track{height:6px;background:var(--surface3);border-radius:99px;overflow:hidden;}
 .progress-bar{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:99px;transition:.4s;box-shadow:0 0 8px rgba(91,124,255,0.3);}
 @keyframes prog{0%{width:5%}30%{width:45%}70%{width:78%}100%{width:92%}}
-.progress-bar.animating{animation:prog 6s ease forwards;}
+.progress-bar.animating{animation:prog 4s ease forwards;}
 .status-text{font-size:13px;color:var(--muted);margin-top:6px;min-height:18px;}
 
 /* ── FORM ── */
@@ -149,15 +207,9 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .config-note a{color:var(--accent);text-decoration:none;font-weight:600;transition:.2s;}
 .config-note a:hover{text-decoration:underline;}
 .status-pill{font-size:13px;margin-top:8px;padding:8px 12px;border-radius:10px;display:none;line-height:1.6;font-weight:500;}
-.pill-ok{background:rgba(16,185,129,0.12);color:#059669;border:1px solid rgba(16,185,129,0.3);}
-.pill-err{background:rgba(239,68,68,0.12);color:#dc2626;border:1px solid rgba(239,68,68,0.3);}
+.pill-ok  {background:rgba(16,185,129,0.12);color:#059669;border:1px solid rgba(16,185,129,0.3);}
+.pill-err {background:rgba(239,68,68,0.12);color:#dc2626;border:1px solid rgba(239,68,68,0.3);}
 .pill-warn{background:rgba(245,158,11,0.12);color:#d97706;border:1px solid rgba(245,158,11,0.3);}
-
-/* ── RAW OCR DEBUG ── */
-.raw-block{background:#1a202c;border-radius:12px;padding:14px;margin-top:12px;display:none;}
-.raw-block.visible{display:block;}
-.raw-block pre{color:#a0f0c0;font-size:12px;font-family:monospace;white-space:pre-wrap;word-break:break-all;max-height:160px;overflow-y:auto;line-height:1.7;}
-.raw-label{font-size:11px;color:#4a9060;font-weight:700;letter-spacing:1px;margin-bottom:6px;text-transform:uppercase;}
 
 /* ── HISTORY ── */
 .history-wrap{grid-column:1/-1;}
@@ -167,7 +219,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .history-table tr:last-child td{border-bottom:none;}
 .history-table tr:hover td{background:var(--surface2);}
 .tag{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;}
-.tag-ok{background:rgba(16,185,129,0.15);color:#059669;}
+.tag-ok {background:rgba(16,185,129,0.15);color:#059669;}
 .tag-err{background:rgba(239,68,68,0.15);color:#dc2626;}
 .tag-pen{background:rgba(245,158,11,0.15);color:#d97706;}
 .empty-history{text-align:center;padding:32px;color:var(--muted);font-size:14px;}
@@ -177,17 +229,15 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .toast{position:fixed;bottom:24px;right:24px;background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:14px 18px;font-size:14px;font-weight:500;z-index:9999;transform:translateY(80px);opacity:0;transition:.3s cubic-bezier(.34,1.56,.64,1);display:flex;align-items:center;gap:10px;min-width:220px;max-width:360px;box-shadow:var(--shadow-lg);}
 .toast.show{transform:translateY(0);opacity:1;}
 .toast.success{border-color:rgba(16,185,129,0.3);background:rgba(16,185,129,0.05);}
-.toast.error{border-color:rgba(239,68,68,0.3);background:rgba(239,68,68,0.05);}
-.toast.warning{border-color:rgba(245,158,11,0.3);background:rgba(245,158,11,0.05);}
+.toast.error  {border-color:rgba(239,68,68,0.3);background:rgba(239,68,68,0.05);}
 
 @keyframes spin{to{transform:rotate(360deg)}}
 .spinner{width:15px;height:15px;border:2.5px solid var(--surface3);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0;}
 
+/* hidden canvas for capture */
 #snapCanvas{display:none;}
+/* gallery input */
 #galleryInput{display:none;}
-
-/* ── ENGINE BADGE ── */
-.engine-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(91,124,255,0.1);border:1px solid rgba(91,124,255,0.25);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600;color:var(--accent);margin-top:8px;}
 
 @media(max-width:860px){
   .main{grid-template-columns:1fr;padding:16px;}
@@ -204,10 +254,10 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   <video id="videoEl" autoplay playsinline></video>
   <canvas id="snapCanvas"></canvas>
 
-  <div id="dimTop"    style="position:absolute;top:0;left:0;right:0;background:rgba(0,0,0,.6);pointer-events:none;"></div>
-  <div id="dimBottom" style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.6);pointer-events:none;"></div>
-  <div id="dimLeft"   style="position:absolute;left:0;background:rgba(0,0,0,.6);pointer-events:none;"></div>
-  <div id="dimRight"  style="position:absolute;right:0;background:rgba(0,0,0,.6);pointer-events:none;"></div>
+  <div id="dimTop"   style="position:absolute;top:0;left:0;right:0;background:rgba(0,0,0,.6);pointer-events:none;"></div>
+  <div id="dimBottom"style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.6);pointer-events:none;"></div>
+  <div id="dimLeft"  style="position:absolute;left:0;background:rgba(0,0,0,.6);pointer-events:none;"></div>
+  <div id="dimRight" style="position:absolute;right:0;background:rgba(0,0,0,.6);pointer-events:none;"></div>
 
   <div class="cam-overlay">
     <div class="cam-frame" id="camFrame">
@@ -250,7 +300,6 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   </div>
 </div>
 
-<div id="fileWarning" style="display:none;background:#fff3cd;border-bottom:2px solid #f59e0b;padding:14px 24px;font-family:'Sarabun',sans-serif;font-size:14px;color:#92400e;position:relative;z-index:1;line-height:1.8;">⚠️ <strong>เปิดจาก file:// โดยตรง — Chrome บล็อก API ทำให้ OCR ไม่ทำงาน</strong><br><span style="margin-left:22px;">วิธีแก้: ใช้ VS Code Live Server หรือรัน <code style="background:rgba(0,0,0,0.1);padding:2px 7px;border-radius:4px;">python -m http.server 8080</code> แล้วเปิด <strong>http://localhost:8080/thai-id-ocr-pro.html</strong></span></div>
 <div class="main">
 
   <!-- LEFT: SCAN -->
@@ -269,7 +318,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       <div class="btn-row">
         <button class="btn btn-cam" onclick="openCamera()">📸 เปิดกล้อง</button>
         <button class="btn btn-gallery" onclick="document.getElementById('galleryInput').click()">🖼 คลังภาพ</button>
-        <button class="btn btn-ghost" onclick="clearAll()">✕ ล้าง</button>
+        <button class="btn btn-ghost" onclick="clearAll()">✕</button>
       </div>
       <div class="btn-row">
         <button class="btn btn-scan" id="scanBtn" onclick="scanOCR()">🔍 วิเคราะห์บัตร</button>
@@ -278,13 +327,6 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       <div class="progress-wrap">
         <div class="progress-track"><div class="progress-bar" id="progressBar"></div></div>
         <div class="status-text" id="statusText">พร้อมทำงาน</div>
-        <div class="engine-badge" id="engineBadge" style="display:none;">🔧 <span id="engineLabel">Engine 2</span></div>
-      </div>
-
-      <!-- RAW OCR DEBUG (แสดงเมื่อเปิด Config) -->
-      <div class="raw-block" id="rawBlock">
-        <div class="raw-label">🔎 Raw OCR Output (Debug)</div>
-        <pre id="rawText"></pre>
       </div>
     </div>
   </div>
@@ -311,10 +353,10 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     </div>
   </div>
 
-  <!-- CONFIG (HIDDEN — กดไอคอน 5 ครั้งเพื่อเปิด) -->
+  <!-- CONFIG (HIDDEN BY DEFAULT) -->
   <div style="grid-column:1/-1;" class="config-section" id="configSection">
     <div class="card">
-      <div class="card-title"><i>⚙️</i> ตั้งค่าระบบ <span style="font-size:11px;color:var(--muted);margin-left:8px;font-weight:400;">(กดไอคอน 🪪 ครบ 5 ครั้งเพื่อเปิด/ปิด)</span></div>
+      <div class="card-title"><i>⚙️</i> ตั้งค่าระบบ</div>
 
       <div class="config-block">
         <div class="config-label">🔍 OCR.space API Key</div>
@@ -324,8 +366,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
         </div>
         <div class="status-pill" id="ocrPill"></div>
         <div class="config-note">
-          💡 สมัครฟรีที่ <a href="https://ocr.space/ocrapi/freekey" target="_blank">ocr.space/ocrapi/freekey</a> → กรอก Email → รับ Key ทางอีเมล (ฟรี 500 ครั้ง/วัน)<br>
-          🔧 ระบบจะลอง Engine 2 ก่อน ถ้าได้ผลน้อยจะ fallback ไป Engine 1 อัตโนมัติ
+          💡 สมัครฟรีที่ <a href="https://ocr.space/ocrapi/freekey" target="_blank">ocr.space/ocrapi/freekey</a> → กรอก Email → รับ Key ทางอีเมล (ฟรี 500 ครั้ง/วัน)
         </div>
       </div>
 
@@ -337,23 +378,6 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
           <button class="btn btn-test" onclick="testSheet()">🔗 ทดสอบ</button>
         </div>
         <div class="status-pill" id="sheetPill"></div>
-        <div class="config-note">
-          ⚠️ Apps Script ต้องตั้งค่า Deploy → Execute as: Me, Who has access: Anyone เพื่อรับ POST ได้
-        </div>
-      </div>
-
-      <div class="config-block">
-        <div class="config-label">🛠 ตัวเลือกขั้นสูง</div>
-        <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;">
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;">
-            <input type="checkbox" id="showRaw" onchange="toggleRawDebug(this.checked)" style="width:16px;height:16px;">
-            <span>แสดง Raw OCR (Debug mode)</span>
-          </label>
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;">
-            <input type="checkbox" id="forceEngine1" onchange="saveConfig()" style="width:16px;height:16px;">
-            <span>บังคับใช้ Engine 1</span>
-          </label>
-        </div>
       </div>
     </div>
   </div>
@@ -375,47 +399,45 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
 <script>
 /* ══════════════════════════════════════
-   DEFAULT CONFIG
+   CONFIGURATION SYSTEM
 ══════════════════════════════════════ */
+// ฝังค่าเริ่มต้น (แก้ไขตรงนี้ได้)
 const DEFAULT_CONFIG = {
-  ocrKey:    'K87899142372222',
-  sheetUrl:  'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec',
+  ocrKey: 'K87899142372222',  // ← ฝังค่า API Key ที่นี่
+  sheetUrl: 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec',  // ← ฝังค่า Apps Script URL ที่นี่
   sheetName: 'Sheet1'
 };
 
-/* ══════════════════════════════════════
-   TOGGLE CONFIG (กดไอคอน 5 ครั้ง)
-══════════════════════════════════════ */
 let configClickCount = 0;
 let configClickTimer = null;
 
 function toggleConfig() {
   configClickCount++;
+  
+  // รีเซ็ต counter หลังจาก 1 วินาที
   clearTimeout(configClickTimer);
-  configClickTimer = setTimeout(() => { configClickCount = 0; }, 1000);
-
-  if (configClickCount >= 5) {
-    const el = document.getElementById('configSection');
-    el.classList.toggle('visible');
+  configClickTimer = setTimeout(() => {
     configClickCount = 0;
-    if (el.classList.contains('visible')) {
+  }, 1000);
+  
+  // ถ้ากดครบ 5 ครั้ง ให้แสดงการตั้งค่า
+  if (configClickCount >= 5) {
+    const configSection = document.getElementById('configSection');
+    configSection.classList.toggle('visible');
+    configClickCount = 0;
+    
+    if (configSection.classList.contains('visible')) {
       toast('⚙️ เปิดการตั้งค่าระบบ', 'success');
-      setTimeout(() => el.scrollIntoView({ behavior: 'smooth' }), 100);
+      // Scroll ไปที่ส่วนการตั้งค่า
+      setTimeout(() => configSection.scrollIntoView({ behavior: 'smooth' }), 100);
     } else {
-      document.getElementById('rawBlock').classList.remove('visible');
       toast('⚙️ ปิดการตั้งค่าระบบ', 'success');
     }
   }
 }
 
-function toggleRawDebug(show) {
-  const rb = document.getElementById('rawBlock');
-  if (show) rb.classList.add('visible');
-  else rb.classList.remove('visible');
-}
-
 /* ══════════════════════════════════════
-   CAMERA ENGINE
+   CAMERA ENGINE — getUserMedia (FIXED)
 ══════════════════════════════════════ */
 let stream = null;
 let facingMode = 'environment';
@@ -429,43 +451,82 @@ function onPreviewClick() {
 async function openCamera() {
   const modal = document.getElementById('cameraModal');
   modal.classList.add('open');
+  
   if (cameraPermissionDenied) {
-    toast('❌ กรุณาอนุญาตกล้องในการตั้งค่าเบราว์เซอร์', 'error');
+    toast('❌ กรุณาอนุญาตกล้องในการตั้งค่าเบราว์เซอร์ แล้วลองใหม่', 'error');
     closeCamera();
     return;
   }
+  
   await startStream();
 }
 
 async function startStream() {
-  if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
-
-  const constraints = {
-    video: { facingMode: { ideal: facingMode }, width: { ideal: 1920 }, height: { ideal: 1080 } },
-    audio: false
-  };
+  if (stream) { 
+    stream.getTracks().forEach(t => t.stop()); 
+    stream = null; 
+  }
 
   try {
+    const constraints = {
+      video: {
+        facingMode: { ideal: facingMode },
+        width:  { ideal: 1920 },
+        height: { ideal: 1080 },
+        focusMode: { ideal: 'continuous' }
+      },
+      audio: false
+    };
+
     stream = await navigator.mediaDevices.getUserMedia(constraints);
     const video = document.getElementById('videoEl');
     video.srcObject = stream;
+
     video.className = facingMode === 'user' ? 'mirrored' : '';
+
     updateCameraStatus();
+
     await new Promise(r => video.onloadedmetadata = r);
     video.play();
     updateDimOverlay();
+    
     cameraPermissionDenied = false;
     toast('✅ เปิดกล้องสำเร็จ', 'success');
-  } catch (err) {
+
+  } catch(err) {
     console.error('Camera error:', err);
     closeCamera();
+    
     if (err.name === 'NotAllowedError') {
       cameraPermissionDenied = true;
       toast('❌ ปฏิเสธสิทธิ์กล้อง — เปิดการตั้งค่าเบราว์เซอร์เพื่ออนุญาต', 'error');
     } else if (err.name === 'NotFoundError') {
       toast('❌ ไม่พบกล้องในอุปกรณ์ — ลองเลือกจากคลังภาพแทน', 'error');
     } else if (err.name === 'NotReadableError') {
-      toast('❌ กล้องถูกใช้งานโดยแอปอื่น — ปิดแล้วลองใหม่', 'error');
+      toast('❌ กล้องถูกใช้งานโดยแอปพลิเคชันอื่น — ปิดแล้วลองใหม่', 'error');
+    } else if (err.name === 'OverconstrainedError') {
+      console.warn('Retrying without focusMode...');
+      const simpleConstraints = {
+        video: {
+          facingMode: { ideal: facingMode },
+          width:  { ideal: 1920 },
+          height: { ideal: 1080 }
+        },
+        audio: false
+      };
+      try {
+        stream = await navigator.mediaDevices.getUserMedia(simpleConstraints);
+        const video = document.getElementById('videoEl');
+        video.srcObject = stream;
+        video.className = facingMode === 'user' ? 'mirrored' : '';
+        updateCameraStatus();
+        await new Promise(r => video.onloadedmetadata = r);
+        video.play();
+        updateDimOverlay();
+        toast('✅ เปิดกล้องสำเร็จ', 'success');
+      } catch(retryErr) {
+        toast('❌ เปิดกล้องไม่ได้: ' + retryErr.message, 'error');
+      }
     } else {
       toast('❌ เปิดกล้องไม่ได้: ' + err.message, 'error');
     }
@@ -475,6 +536,7 @@ async function startStream() {
 function updateCameraStatus() {
   const statusText = document.getElementById('camStatusText');
   const flipBtn = document.getElementById('flipBtn');
+  
   if (facingMode === 'user') {
     statusText.textContent = '📱 กล้องหน้า';
     flipBtn.classList.add('active');
@@ -490,7 +552,10 @@ async function flipCamera() {
 }
 
 function closeCamera() {
-  if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+  if (stream) { 
+    stream.getTracks().forEach(t => t.stop()); 
+    stream = null; 
+  }
   document.getElementById('cameraModal').classList.remove('open');
 }
 
@@ -498,10 +563,13 @@ function updateDimOverlay() {
   const frame = document.getElementById('camFrame');
   const rect  = frame.getBoundingClientRect();
   const vw = window.innerWidth, vh = window.innerHeight;
-  document.getElementById('dimTop').style.height    = rect.top + 'px';
+
+  document.getElementById('dimTop').style.height    = rect.top  + 'px';
   document.getElementById('dimBottom').style.height = (vh - rect.bottom) + 'px';
-  document.getElementById('dimLeft').style.cssText  = `top:${rect.top}px;height:${rect.height}px;width:${rect.left}px;`;
-  document.getElementById('dimRight').style.cssText = `top:${rect.top}px;height:${rect.height}px;width:${vw - rect.right}px;`;
+  document.getElementById('dimLeft').style.cssText  =
+    `top:${rect.top}px;height:${rect.height}px;width:${rect.left}px;`;
+  document.getElementById('dimRight').style.cssText =
+    `top:${rect.top}px;height:${rect.height}px;width:${vw - rect.right}px;`;
 }
 window.addEventListener('resize', updateDimOverlay);
 
@@ -514,17 +582,21 @@ function capturePhoto() {
 
   const scaleX = video.videoWidth  / vRect.width;
   const scaleY = video.videoHeight / vRect.height;
-  const cropX  = (fRect.left - vRect.left) * scaleX;
-  const cropY  = (fRect.top  - vRect.top)  * scaleY;
-  const cropW  = fRect.width  * scaleX;
-  const cropH  = fRect.height * scaleY;
+
+  const cropX = (fRect.left - vRect.left) * scaleX;
+  const cropY = (fRect.top  - vRect.top)  * scaleY;
+  const cropW = fRect.width  * scaleX;
+  const cropH = fRect.height * scaleY;
 
   canvas.width  = cropW;
   canvas.height = cropH;
+
   const ctx = canvas.getContext('2d');
 
   if (facingMode === 'user') {
-    ctx.save(); ctx.translate(cropW, 0); ctx.scale(-1, 1);
+    ctx.save();
+    ctx.translate(cropW, 0);
+    ctx.scale(-1, 1);
     ctx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
     ctx.restore();
   } else {
@@ -533,21 +605,21 @@ function capturePhoto() {
 
   canvas.toBlob(blob => {
     selectedFile = new File([blob], 'id_card.jpg', { type: 'image/jpeg' });
-    showPreview(URL.createObjectURL(blob));
+    const url = URL.createObjectURL(blob);
+    showPreview(url);
     closeCamera();
     toast('📸 ถ่ายรูปสำเร็จ! กด วิเคราะห์บัตร ได้เลย', 'success');
   }, 'image/jpeg', 0.95);
 }
 
 /* ══════════════════════════════════════
-   GALLERY
+   GALLERY FALLBACK
 ══════════════════════════════════════ */
 document.getElementById('galleryInput').addEventListener('change', e => {
   const file = e.target.files[0];
   if (!file) return;
   selectedFile = file;
   showPreview(URL.createObjectURL(file));
-  toast('🖼 โหลดรูปสำเร็จ กด วิเคราะห์บัตร ได้เลย', 'success');
 });
 
 function showPreview(url) {
@@ -569,70 +641,15 @@ function clearAll() {
   const bar = document.getElementById('progressBar');
   bar.style.width = '0%'; bar.classList.remove('animating');
   document.getElementById('statusText').textContent = 'พร้อมทำงาน';
-  document.getElementById('engineBadge').style.display = 'none';
-  document.getElementById('rawText').textContent = '';
-  // ล้างฟิลด์ OCR ด้วย
-  setField('f_fullname', '');
-  setField('f_address', '');
 }
 
 /* ══════════════════════════════════════
-   OCR — แยก callOCR() + retry logic
+   OCR.space
 ══════════════════════════════════════ */
-
-/**
- * เรียก OCR.space API
- * @param {string} key    - API key
- * @param {File}   file   - ไฟล์รูปภาพ
- * @param {string} engine - '1' หรือ '2'
- * @returns {string} ข้อความดิบจาก OCR
- *
- * หมายเหตุ language parameter:
- *   Engine 1 → รองรับ 'tha' ได้
- *   Engine 2 → ไม่รับ language parameter (auto-detect) — ถ้าส่งไปจะได้ E201 error
- *
- * หมายเหตุ file:// origin:
- *   Chrome บล็อก fetch จาก file:// → ต้องรันผ่าน local server หรือ deploy บน hosting
- *   วิธีง่ายที่สุด: ใช้ VS Code Live Server / python -m http.server / npx serve
- */
-async function callOCR(key, file, engine = '2') {
-  // ตรวจสอบ file:// origin แจ้งเตือนก่อน fetch
-  if (location.protocol === 'file:') {
-    throw new Error(
-      'ไม่สามารถเรียก API จาก file:// ได้ — กรุณารันผ่าน web server\n' +
-      'วิธี: ใช้ VS Code Live Server, หรือพิมพ์ใน terminal: python -m http.server 8080\n' +
-      'แล้วเปิด http://localhost:8080/thai-id-ocr-pro.html'
-    );
-  }
-
-  const fd = new FormData();
-  fd.append('file', file);
-  fd.append('apikey', key);
-  fd.append('language', 'tha');   // ทั้ง Engine 1 และ 2 รับได้ (Engine 2 จะ auto-detect ถ้าไม่รู้จัก)
-  fd.append('isOverlayRequired', 'false');
-  fd.append('detectOrientation', 'true');
-  fd.append('scale', 'true');
-  fd.append('OCREngine', engine);
-
-  const res = await fetch('https://api.ocr.space/parse/image', { method: 'POST', body: fd });
-  if (!res.ok) throw new Error('HTTP ' + res.status + ' จาก OCR.space');
-  const data = await res.json();
-
-  if (data.IsErroredOnProcessing) {
-    const msg = Array.isArray(data.ErrorMessage) ? data.ErrorMessage[0] : (data.ErrorMessage || 'OCR Error');
-    throw new Error(msg);
-  }
-
-  return data.ParsedResults?.[0]?.ParsedText || '';
-}
-
 async function scanOCR() {
   if (!selectedFile) { toast('กรุณาถ่ายรูปหรือเลือกภาพก่อน', 'error'); return; }
-
   const key = document.getElementById('ocrKey').value.trim();
-  if (!key) { toast('กรุณากรอก OCR.space API Key ในการตั้งค่าก่อน', 'error'); return; }
-
-  const forceEng1 = document.getElementById('forceEngine1').checked;
+  if (!key) { toast('กรุณากรอก OCR.space API Key ก่อน', 'error'); return; }
 
   const btn = document.getElementById('scanBtn');
   btn.disabled = true;
@@ -640,185 +657,83 @@ async function scanOCR() {
 
   const bar = document.getElementById('progressBar');
   bar.style.width = '0%'; bar.classList.add('animating');
-
-  const badge     = document.getElementById('engineBadge');
-  const badgeLbl  = document.getElementById('engineLabel');
-  badge.style.display = 'none';
+  setStatus('กำลังส่งรูปให้ OCR.space...');
 
   try {
-    let raw = '';
-    let usedEngine = '2';
+    const fd = new FormData();
+    fd.append('file', selectedFile);
+    fd.append('apikey', key);
+    fd.append('language', 'tha');
+    fd.append('isOverlayRequired', 'false');
+    fd.append('detectOrientation', 'true');
+    fd.append('scale', 'true');
+    fd.append('OCREngine', '2');
 
-    if (forceEng1) {
-      // บังคับ Engine 1
-      setStatus('กำลังส่งรูปให้ OCR.space (Engine 1)...');
-      raw = await callOCR(key, selectedFile, '1');
-      usedEngine = '1';
-    } else {
-      // ลอง Engine 2 ก่อน (เร็วกว่า, ดีกับตัวหนา)
-      setStatus('กำลังส่งรูปให้ OCR.space (Engine 2)...');
-      raw = await callOCR(key, selectedFile, '2');
-      usedEngine = '2';
+    const res  = await fetch('https://api.ocr.space/parse/image', { method:'POST', body:fd });
+    const data = await res.json();
 
-      // ถ้าได้ผลน้อยเกินไป fallback ไป Engine 1
-      if (raw.trim().length < 20) {
-        setStatus('Engine 2 ได้ผลน้อย — กำลังลอง Engine 1...');
-        toast('⚠️ Engine 2 ได้ผลน้อย — กำลัง retry Engine 1...', 'warning');
-        const raw1 = await callOCR(key, selectedFile, '1');
-        if (raw1.trim().length > raw.trim().length) {
-          raw = raw1;
-          usedEngine = '1';
-        }
-      }
-    }
+    if (data.IsErroredOnProcessing) throw new Error(data.ErrorMessage?.[0] || 'OCR Error');
 
-    // แสดง engine badge
-    badgeLbl.textContent = 'Engine ' + usedEngine;
-    badge.style.display = 'inline-flex';
-
-    // Debug — แสดง raw ถ้าเปิด debug mode
-    console.log('[OCR raw — Engine ' + usedEngine + ']', raw);
-    const rawEl = document.getElementById('rawText');
-    rawEl.textContent = raw || '(ไม่พบข้อความ)';
-
-    if (!raw.trim()) {
-      throw new Error('ไม่พบข้อความในรูป — ลองถ่ายใหม่ให้ชัดขึ้น หรือลองใช้ Engine 1 ในการตั้งค่า');
-    }
+    const raw = data.ParsedResults?.[0]?.ParsedText || '';
+    if (!raw.trim()) throw new Error('ไม่พบข้อความในรูป — ลองถ่ายใหม่ให้ชัดขึ้น');
 
     const result = extractID(raw);
+    bar.classList.remove('animating'); bar.style.width = '100%';
+    setStatus('✅ วิเคราะห์สำเร็จ');
+    setField('f_fullname', result.fullname);
+    setField('f_address',  result.address);
+    toast('✅ OCR สำเร็จ! ตรวจสอบข้อมูลก่อนบันทึก', 'success');
 
-    bar.classList.remove('animating');
-    bar.style.width = '100%';
-
-    if (result.fullname || result.address) {
-      setStatus('✅ วิเคราะห์สำเร็จ (Engine ' + usedEngine + ')');
-      setField('f_fullname', result.fullname);
-      setField('f_address',  result.address);
-
-      if (!result.fullname) {
-        toast('⚠️ OCR เสร็จแต่จับชื่อไม่ได้ — กรุณากรอกเอง', 'warning');
-      } else if (!result.address) {
-        toast('✅ OCR สำเร็จ (จับชื่อได้ แต่ที่อยู่ไม่ชัด)', 'success');
-      } else {
-        toast('✅ OCR สำเร็จ! ตรวจสอบข้อมูลก่อนบันทึก', 'success');
-      }
-    } else {
-      setStatus('⚠️ OCR เสร็จ แต่ไม่พบชื่อ/ที่อยู่ในรูปแบบที่คาดหวัง');
-      toast('⚠️ OCR เสร็จแต่จับข้อมูลไม่ได้ — ดู Raw Output เพื่อตรวจสอบ', 'warning');
-    }
-
-  } catch (e) {
-    bar.classList.remove('animating');
-    bar.style.width = '0%';
+  } catch(e) {
+    bar.classList.remove('animating'); bar.style.width = '0%';
     setStatus('❌ ' + e.message);
     toast('❌ ' + e.message, 'error');
-    console.error('[OCR Error]', e);
   }
 
   btn.disabled = false;
   btn.innerHTML = '🔍 วิเคราะห์บัตร';
 }
 
-/* ══════════════════════════════════════
-   extractID() — แก้ regex ให้ยืดหยุ่น
-══════════════════════════════════════ */
 function extractID(text) {
-  const lines = text.split('\n').map(x => x.trim()).filter(x => x.length > 0);
+  const lines = text.split('\n').map(x => x.trim()).filter(x => x);
   let fullname = '', address = '';
 
   for (let i = 0; i < lines.length; i++) {
-    // ทำความสะอาด label ที่ OCR มักติดมา
     let line = lines[i]
-      .replace(/ชื่อ(ตัว|และ|ตัวและ)?(ชื่อ)?(สกุล|เอก)?/g, '')
-      .replace(/Name\s*\(?\s*in\s*Thai\s*\)?/gi, '')
-      .replace(/Last\s*name/gi, '')
-      .replace(/\bUN\b/g, 'นาง')
-      .replace(/\s+/g, ' ')
-      .trim();
+      .replace(/ชื่อ(ตัว|และ|ตัวและ)?(ชื่อ)?(สกุล|เอก)?/g,'')
+      .replace(/Name|Last\s*name/gi,'').replace(/\bUN\b/g,'นาง').trim();
 
     let m;
-
-    // ── รูปแบบที่ 1: คำนำหน้าอยู่ในบรรทัดเดียวกับชื่อ (ติดหรือมี space)
-    m = line.match(/(นาย|นางสาว|นาง)\s*([ก-๙]{2,})\s+([ก-๙]{2,})/);
+    m = line.match(/(นาย|นางสาว|นาง)\s+[ก-๙]+\s+[ก-๙]+/);
+    if (m) { fullname = m[0].trim(); break; }
+    m = line.match(/(น\.?ส\.?|ด\.?ช\.?|ด\.?ญ\.?)\s*[ก-๙]+\s+[ก-๙]+/);
     if (m) {
-      fullname = (m[1] + ' ' + m[2] + ' ' + m[3]).replace(/\s+/g, ' ').trim();
+      fullname = m[0]
+        .replace(/น\.?ส\.?/,'นางสาว ').replace(/ด\.?ช\.?/,'เด็กชาย ').replace(/ด\.?ญ\.?/,'เด็กหญิง ')
+        .replace(/\s+/,' ').trim();
       break;
     }
-
-    // ── รูปแบบที่ 2: คำนำหน้าย่อ (น.ส. ด.ช. ด.ญ.) ติดหรือมี space
-    m = line.match(/(น\.?\s*ส\.?|ด\.?\s*ช\.?|ด\.?\s*ญ\.?)\s*([ก-๙]{2,})\s+([ก-๙]{2,})/);
-    if (m) {
-      let prefix = m[1].replace(/\s/g, '');
-      prefix = prefix.replace(/น\.?ส\.?/, 'นางสาว')
-                     .replace(/ด\.?ช\.?/, 'เด็กชาย')
-                     .replace(/ด\.?ญ\.?/, 'เด็กหญิง');
-      fullname = (prefix + ' ' + m[2] + ' ' + m[3]).replace(/\s+/g, ' ').trim();
-      break;
+    if (/^(Miss|Mr\.?|Mrs\.?)\s/i.test(line) && i > 0) {
+      const prev = lines[i-1].replace(/ชื่อ.*|Name.*/gi,'').trim();
+      if (/[ก-๙]{2,}\s+[ก-๙]{2,}/.test(prev)) { fullname = prev; break; }
     }
-
-    // ── รูปแบบที่ 3: คำนำหน้าอยู่คนละบรรทัดกับชื่อ-สกุล
-    if (/(นาย|นางสาว|นาง|น\.?\s*ส\.?)/.test(line)) {
-      const prefixMatch = line.match(/(นาย|นางสาว|นาง)/);
-      const prefix = prefixMatch ? prefixMatch[0] : '';
-      // ดูบรรทัดถัดไป 1-2 บรรทัด
-      for (let j = i + 1; j < Math.min(i + 3, lines.length); j++) {
-        const nl = lines[j].trim();
-        if (/^[ก-๙]{2,}\s+[ก-๙]{2,}/.test(nl)) {
-          fullname = (prefix + ' ' + nl).replace(/\s+/g, ' ').trim();
-          break;
-        }
-      }
-      if (fullname) break;
-    }
-
-    // ── รูปแบบที่ 4: English คำนำหน้า → บรรทัดก่อนหน้าเป็นชื่อไทย
-    if (/^(Miss|Mr\.?|Mrs\.?|Ms\.?)\s/i.test(line) && i > 0) {
-      const prev = lines[i - 1].replace(/ชื่อ.*|Name.*/gi, '').trim();
-      if (/[ก-๙]{2,}\s+[ก-๙]{2,}/.test(prev)) {
-        fullname = prev;
-        break;
-      }
-    }
-
-    // ── รูปแบบที่ 5: 2 คำภาษาไทยติดกัน ไม่ใช่ที่อยู่
-    m = line.match(/([ก-๙]{2,})\s+([ก-๙]{2,})/);
-    if (m && !/\d/.test(line) && !/(หมู่|ตำบล|อำเภอ|จังหวัด|ถนน|ซอย|แขวง|เขต)/.test(line)) {
-      fullname = (m[1] + ' ' + m[2]).trim();
-      break;
+    m = line.match(/[ก-๙]{2,}\s+[ก-๙]{2,}/);
+    if (m && !/\d/.test(line) && !/(หมู่|ตำบล|อำเภอ|จังหวัด|ถนน|ซอย)/.test(line)) {
+      fullname = m[0].trim(); break;
     }
   }
 
-  // ── หาที่อยู่ — ไม่บังคับตัวเลขนำ
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
-    const hasAddrKeyword = /(หมู่|ซ\.|ซอย|ต\.|ตำบล|อ\.|อำเภอ|จ\.|จังหวัด|แขวง|เขต)/.test(line);
-
-    if (hasAddrKeyword) {
+    const isAddr = /\d+\/?\d*/.test(line) &&
+      /(หมู่|ซ\.|ซอย|ต\.|ตำบล|อ\.|อำเภอ|จ\.|จังหวัด|แขวง|เขต)/.test(line);
+    if (isAddr) {
       let parts = [line];
-      for (let j = i + 1; j < Math.min(i + 4, lines.length); j++) {
-        const nl = lines[j];
-        if (!nl) break;
-        // หยุดถ้าเจอบรรทัดที่ดูเหมือนข้อมูลอื่น
-        if (/(วัน|เดือน|ปี|Date|Birth|เกิด)/.test(nl)) break;
-        if (/\d{13}/.test(nl)) break; // เลขบัตร 13 หลัก
-        if (/(หมู่|ตำบล|อำเภอ|จังหวัด|แขวง|เขต|\d{5})/.test(nl)) {
-          parts.push(nl);
-        } else if (/[ก-๙]/.test(nl) && !/^\s*$/.test(nl) && parts.length < 3) {
-          // บรรทัดไทยที่ต่อเนื่อง (อาจเป็นส่วนที่อยู่)
-          parts.push(nl);
-        }
+      for (let j = i+1; j < Math.min(i+3, lines.length); j++) {
+        if (!lines[j] || /(วัน|Date|เกิด|\d{4}.*\d{4})/.test(lines[j])) break;
+        if (/(หมู่|ตำบล|อำเภอ|จังหวัด|แขวง|เขต|\d{5})/.test(lines[j])) parts.push(lines[j]);
       }
-      address = parts.join(' ').replace(/\s+/g, ' ').trim();
-      break;
-    }
-  }
-
-  // ── หา postcode จากที่อยู่ แล้วใส่ field อัตโนมัติ
-  if (address) {
-    const pcMatch = address.match(/\b(\d{5})\b/);
-    if (pcMatch) {
-      const pcField = document.getElementById('f_postcode');
-      if (!pcField.value) pcField.value = pcMatch[1];
+      address = parts.join(' ').replace(/\s+/g,' ').trim(); break;
     }
   }
 
@@ -828,24 +743,17 @@ function extractID(text) {
 /* ══════════════════════════════════════
    HELPERS
 ══════════════════════════════════════ */
-function setStatus(t) {
-  document.getElementById('statusText').textContent = t;
-}
-
+function setStatus(t) { document.getElementById('statusText').textContent = t; }
 function setField(id, val) {
   const el = document.getElementById(id);
   el.value = val || '';
-  if (val) {
-    el.classList.add('ocr-highlight');
-    setTimeout(() => el.classList.remove('ocr-highlight'), 2500);
-  }
+  if (val) { el.classList.add('ocr-highlight'); setTimeout(() => el.classList.remove('ocr-highlight'), 2500); }
 }
-
 function fmtPhone(p) {
   if (!p) return '';
-  const d = p.replace(/\D/g, '');
-  if (d.length === 9)  return d.slice(0, 2) + '-' + d.slice(2, 5) + '-' + d.slice(5);
-  if (d.length === 10) return d.slice(0, 3) + '-' + d.slice(3, 7) + '-' + d.slice(7);
+  const d = p.replace(/\D/g,'');
+  if (d.length===9)  return d.slice(0,2)+'-'+d.slice(2,5)+'-'+d.slice(5);
+  if (d.length===10) return d.slice(0,3)+'-'+d.slice(3,7)+'-'+d.slice(7);
   return p;
 }
 
@@ -853,137 +761,90 @@ function fmtPhone(p) {
    CONFIG
 ══════════════════════════════════════ */
 function saveConfig() {
-  localStorage.setItem('ocr_key',        document.getElementById('ocrKey').value);
-  localStorage.setItem('sheet_url',      document.getElementById('sheetUrl').value);
-  localStorage.setItem('sheet_nm',       document.getElementById('sheetName').value);
-  localStorage.setItem('force_engine1',  document.getElementById('forceEngine1').checked ? '1' : '0');
-  localStorage.setItem('show_raw',       document.getElementById('showRaw').checked ? '1' : '0');
+  localStorage.setItem('ocr_key',   document.getElementById('ocrKey').value);
+  localStorage.setItem('sheet_url', document.getElementById('sheetUrl').value);
+  localStorage.setItem('sheet_nm',  document.getElementById('sheetName').value);
 }
-
 function loadConfig() {
-  document.getElementById('ocrKey').value      = localStorage.getItem('ocr_key')   || DEFAULT_CONFIG.ocrKey;
-  document.getElementById('sheetUrl').value    = localStorage.getItem('sheet_url') || DEFAULT_CONFIG.sheetUrl;
-  document.getElementById('sheetName').value   = localStorage.getItem('sheet_nm')  || DEFAULT_CONFIG.sheetName;
-  document.getElementById('forceEngine1').checked = localStorage.getItem('force_engine1') === '1';
-  const showRaw = localStorage.getItem('show_raw') === '1';
-  document.getElementById('showRaw').checked = showRaw;
-  if (showRaw) document.getElementById('rawBlock').classList.add('visible');
+  // ใช้ค่าจาก localStorage หรือค่าเริ่มต้นจาก DEFAULT_CONFIG
+  document.getElementById('ocrKey').value   = localStorage.getItem('ocr_key')   || DEFAULT_CONFIG.ocrKey;
+  document.getElementById('sheetUrl').value = localStorage.getItem('sheet_url') || DEFAULT_CONFIG.sheetUrl;
+  document.getElementById('sheetName').value= localStorage.getItem('sheet_nm')  || DEFAULT_CONFIG.sheetName;
 }
-
-/* ── TEST OCR KEY ── */
 async function testOcr() {
   const key = document.getElementById('ocrKey').value.trim();
-  if (!key) { pill('ocrPill', 'กรุณากรอก Key ก่อน', 'err'); return; }
-  pill('ocrPill', 'กำลังทดสอบ...', 'warn');
+  if (!key) { pill('ocrPill','กรุณากรอก Key ก่อน','err'); return; }
+  pill('ocrPill','กำลังทดสอบ...','warn');
   try {
     const fd = new FormData();
-    fd.append('apikey', key);
-    fd.append('url', 'https://i.imgur.com/viiMM6A.png');
-    fd.append('language', 'eng');
-    const r = await fetch('https://api.ocr.space/parse/image', { method: 'POST', body: fd });
+    fd.append('apikey', key); fd.append('url','https://i.imgur.com/viiMM6A.png'); fd.append('language','eng');
+    const r = await fetch('https://api.ocr.space/parse/image',{method:'POST',body:fd});
     const d = await r.json();
-    if (d.OCRExitCode === 6) {
-      pill('ocrPill', '❌ API Key ไม่ถูกต้อง หรือหมดโควต้าแล้ว', 'err');
-    } else {
-      pill('ocrPill', '✅ API Key ใช้งานได้! (Exit Code: ' + d.OCRExitCode + ')', 'ok');
-    }
-  } catch (e) {
-    pill('ocrPill', '❌ เชื่อมต่อไม่ได้: ' + e.message, 'err');
-  }
+    pill('ocrPill', d.OCRExitCode===6 ? '❌ API Key ไม่ถูกต้อง' : '✅ API Key ใช้งานได้!',
+         d.OCRExitCode===6 ? 'err' : 'ok');
+  } catch(e) { pill('ocrPill','❌ '+e.message,'err'); }
 }
-
-/* ── TEST SHEET ──
-   หมายเหตุ: mode:'no-cors' ทำให้รู้แค่ว่า request ส่งไปได้
-   ไม่สามารถรู้ response จริงได้ ต้องดูใน Apps Script execution log
-*/
 async function testSheet() {
   const url = document.getElementById('sheetUrl').value.trim();
-  if (!url) { pill('sheetPill', 'กรุณากรอก URL ก่อน', 'err'); return; }
-  if (!url.includes('script.google.com')) {
-    pill('sheetPill', '⚠️ URL ดูไม่ถูกต้อง ควรขึ้นต้นด้วย script.google.com', 'warn');
-    return;
-  }
-  pill('sheetPill', 'กำลังส่ง test request... (no-cors mode)', 'warn');
+  if (!url) { pill('sheetPill','กรุณากรอก URL ก่อน','err'); return; }
+  pill('sheetPill','กำลังทดสอบ...','warn');
   try {
-    await fetch(url, { method: 'GET', mode: 'no-cors' });
-    pill('sheetPill', '✅ ส่ง request ไปถึง URL แล้ว — ตรวจสอบ Apps Script execution log เพื่อยืนยัน', 'ok');
-  } catch (e) {
-    pill('sheetPill', '❌ ส่ง request ไม่ได้: ' + e.message, 'err');
-  }
+    await fetch(url,{method:'GET',mode:'no-cors'});
+    pill('sheetPill','✅ เชื่อมต่อได้','ok');
+  } catch(e) { pill('sheetPill','❌ '+e.message,'err'); }
 }
-
 function pill(id, msg, type) {
   const el = document.getElementById(id);
   el.textContent = msg;
-  el.className = 'status-pill pill-' + type;
+  el.className = 'status-pill pill-'+type;
   el.style.display = 'block';
 }
 
 /* ══════════════════════════════════════
-   SUBMIT TO SHEET
-   หมายเหตุ: no-cors ทำให้ไม่รู้ response จาก Apps Script
-   status จึงเป็น 'sent' (ส่งไป) ไม่ใช่ 'ok' (บันทึกสำเร็จ)
+   SUBMIT
 ══════════════════════════════════════ */
 async function submitToSheet() {
-  const url       = document.getElementById('sheetUrl').value.trim();
-  const sheetName = document.getElementById('sheetName').value || 'Sheet1';
-
+  const url = document.getElementById('sheetUrl').value.trim();
+  const sheetName = document.getElementById('sheetName').value||'Sheet1';
+  
   const payload = {
     sheet:    sheetName,
-    assignee: document.getElementById('f_assignee').value.trim(),
-    fullname: document.getElementById('f_fullname').value.trim(),
-    address:  document.getElementById('f_address').value.trim(),
-    postcode: document.getElementById('f_postcode').value.trim(),
-    phone:    fmtPhone(document.getElementById('f_phone').value.trim()),
-    qty:      document.getElementById('f_qty').value || 1,
-    note:     document.getElementById('f_note').value.trim(),
+    assignee: document.getElementById('f_assignee').value,
+    fullname: document.getElementById('f_fullname').value,
+    address:  document.getElementById('f_address').value,
+    postcode: document.getElementById('f_postcode').value,
+    phone:    fmtPhone(document.getElementById('f_phone').value),
+    qty:      document.getElementById('f_qty').value||1,
+    note:     document.getElementById('f_note').value,
     time:     new Date().toLocaleString('th-TH'),
     status:   'pending'
   };
-
-  if (!payload.fullname && !payload.assignee) {
-    toast('กรุณากรอกชื่อลูกค้าหรือชื่อผู้รับงานก่อน', 'error');
-    return;
-  }
+  
+  if (!payload.fullname && !payload.assignee) { toast('กรุณากรอกข้อมูลอย่างน้อยหนึ่งช่อง','error'); return; }
 
   const btn = document.getElementById('submitBtn');
   document.getElementById('submitIcon').textContent = '';
   document.getElementById('submitLabel').textContent = 'กำลังบันทึก...';
   btn.disabled = true;
-  const spinner = document.createElement('div');
-  spinner.className = 'spinner';
-  spinner.style.cssText = 'position:absolute;left:18px';
-  btn.prepend(spinner);
+  btn.insertAdjacentHTML('afterbegin','<div class="spinner" style="position:absolute;left:18px"></div>');
 
   const rec = { ...payload };
 
-  if (url && url !== DEFAULT_CONFIG.sheetUrl) {
+  if (url) {
     try {
-      // no-cors: ไม่มี response body — ถือว่าส่งไปแล้ว
-      await fetch(url, {
-        method: 'POST',
-        mode:   'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body:   JSON.stringify(payload)
-      });
-      rec.status = 'sent';
-      toast('📤 ส่งข้อมูลไปแล้ว — ตรวจสอบ Sheet เพื่อยืนยัน', 'success');
-    } catch (e) {
-      rec.status = 'error';
-      toast('❌ ส่งไม่ได้: ' + e.message, 'error');
-    }
+      const response = await fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+      rec.status = 'ok'; toast('✅ บันทึกสำเร็จ!','success');
+    } catch(e) { rec.status = 'error'; toast('❌ '+e.message,'error'); }
   } else {
-    rec.status = 'local';
-    toast('💾 บันทึกในเครื่อง (ยังไม่ได้ตั้งค่า Sheet URL)', 'success');
+    rec.status = 'local'; toast('💾 บันทึกในเครื่อง (ยังไม่ตั้งค่า Sheet)','success');
   }
 
-  // บันทึก history
-  let hist = JSON.parse(localStorage.getItem('ocr_hist') || '[]');
+  let hist = JSON.parse(localStorage.getItem('ocr_hist')||'[]');
   hist.unshift(rec);
-  localStorage.setItem('ocr_hist', JSON.stringify(hist.slice(0, 50)));
+  localStorage.setItem('ocr_hist', JSON.stringify(hist.slice(0,50)));
   renderHist();
 
-  spinner.remove();
+  btn.querySelector('.spinner')?.remove();
   document.getElementById('submitIcon').textContent = '📤';
   document.getElementById('submitLabel').textContent = 'บันทึกลง Google Sheets';
   btn.disabled = false;
@@ -993,72 +854,40 @@ async function submitToSheet() {
    HISTORY
 ══════════════════════════════════════ */
 function renderHist() {
-  const hist = JSON.parse(localStorage.getItem('ocr_hist') || '[]');
+  const hist = JSON.parse(localStorage.getItem('ocr_hist')||'[]');
   document.getElementById('histCount').textContent = hist.length;
   const el = document.getElementById('histBody');
-
-  if (!hist.length) {
-    el.innerHTML = '<div class="empty-history">ยังไม่มีประวัติการบันทึก</div>';
-    return;
-  }
-
-  const rows = hist.slice(0, 30).map(r => {
-    let tag = '';
-    if (r.status === 'ok' || r.status === 'sent') {
-      tag = '<span class="tag tag-ok">📤 ส่งแล้ว</span>';
-    } else if (r.status === 'error') {
-      tag = '<span class="tag tag-err">✗ ผิดพลาด</span>';
-    } else {
-      tag = '<span class="tag tag-pen">💾 ในเครื่อง</span>';
-    }
+  if (!hist.length) { el.innerHTML='<div class="empty-history">ยังไม่มีประวัติ</div>'; return; }
+  const rows = hist.slice(0,20).map(r => {
+    const tag = r.status==='ok' ? '<span class="tag tag-ok">✓ สำเร็จ</span>'
+              : r.status==='error' ? '<span class="tag tag-err">✗ ผิดพลาด</span>'
+              : '<span class="tag tag-pen">💾 ในเครื่อง</span>';
     return `<tr>
-      <td style="color:var(--muted);font-size:12px;white-space:nowrap">${r.time || '-'}</td>
-      <td>${r.fullname || '—'}</td>
-      <td>${r.assignee || '—'}</td>
-      <td style="text-align:center">${r.qty || 1}</td>
-      <td>${r.phone || '—'}</td>
-      <td>${tag}</td>
-    </tr>`;
+      <td style="color:var(--muted);font-size:12px">${r.time}</td>
+      <td>${r.fullname||'—'}</td><td>${r.assignee||'—'}</td>
+      <td style="text-align:center">${r.qty||1}</td>
+      <td>${r.phone||'—'}</td><td>${tag}</td></tr>`;
   }).join('');
-
   el.innerHTML = `<table class="history-table">
-    <thead><tr>
-      <th>เวลา</th><th>ชื่อลูกค้า</th><th>ผู้รับงาน</th>
-      <th>จำนวน</th><th>เบอร์โทร</th><th>สถานะ</th>
-    </tr></thead>
-    <tbody>${rows}</tbody>
-  </table>`;
+    <thead><tr><th>เวลา</th><th>ชื่อลูกค้า</th><th>ผู้รับงาน</th><th>จำนวน</th><th>เบอร์โทร</th><th>สถานะ</th></tr></thead>
+    <tbody>${rows}</tbody></table>`;
 }
-
 function clearHistory() {
   if (!confirm('ลบประวัติทั้งหมด?')) return;
-  localStorage.removeItem('ocr_hist');
-  renderHist();
+  localStorage.removeItem('ocr_hist'); renderHist();
 }
 
-/* ══════════════════════════════════════
-   TOAST
-══════════════════════════════════════ */
-let toastTimer = null;
-function toast(msg, type = 'success') {
+/* ── TOAST ── */
+function toast(msg, type='success') {
   const el = document.getElementById('toast');
-  const icon = type === 'success' ? '✅' : type === 'warning' ? '⚠️' : '❌';
-  el.innerHTML = `<span>${icon}</span><span>${msg}</span>`;
+  el.innerHTML = `<span>${type==='success'?'✅':'❌'}</span><span>${msg}</span>`;
   el.className = `toast ${type} show`;
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('show'), 4000);
+  setTimeout(() => el.classList.remove('show'), 3500);
 }
 
-/* ══════════════════════════════════════
-   INIT
-══════════════════════════════════════ */
+/* ── INIT ── */
 loadConfig();
 renderHist();
-
-// ตรวจ file:// origin — แสดง banner เตือน
-if (location.protocol === 'file:') {
-  document.getElementById('fileWarning').style.display = 'block';
-}
 </script>
 </body>
 </html>
