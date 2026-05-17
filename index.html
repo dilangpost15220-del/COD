@@ -668,26 +668,37 @@ async function scanOCR() {
     fd.append('detectOrientation', 'true');
     fd.append('scale', 'true');
     fd.append('OCREngine', '2');
+    fd.append('filetype', 'jpg');
 
-    const res  = await fetch('https://api.ocr.space/parse/image', { method:'POST', body:fd });
+    const res = await fetch('https://api.ocr.space/parse/image', { method:'POST', body:fd });
     const data = await res.json();
 
-    if (data.IsErroredOnProcessing) throw new Error(data.ErrorMessage?.[0] || 'OCR Error');
+    if (data.IsErroredOnProcessing) {
+      const errMsg = data.ErrorMessage?.[0] || '';
+      if (errMsg.includes('limit') || errMsg.includes('quota')) {
+        throw new Error('API Key หมดโควต้า (500 ครั้ง/วัน)');
+      }
+      throw new Error(errMsg || 'OCR Error');
+    }
 
     const raw = data.ParsedResults?.[0]?.ParsedText || '';
-    if (!raw.trim()) throw new Error('ไม่พบข้อความในรูป — ลองถ่ายใหม่ให้ชัดขึ้น');
+    if (!raw.trim()) throw new Error('ไม่พบข้อความในรูป — ลองถ่ายใหม่ให้ชัดขึ้น (แสงสว่าง บัตรตรงกรอบ)');
 
     const result = extractID(raw);
     bar.classList.remove('animating'); bar.style.width = '100%';
     setStatus('✅ วิเคราะห์สำเร็จ');
     setField('f_fullname', result.fullname);
     setField('f_address',  result.address);
-    toast('✅ OCR สำเร็จ! ตรวจสอบข้อมูลก่อนบันทึก', 'success');
+    toast('✅ OCR สำเร็จ! ชื่อ: ' + (result.fullname || 'ไม่พบ'), 'success');
 
   } catch(e) {
     bar.classList.remove('animating'); bar.style.width = '0%';
     setStatus('❌ ' + e.message);
     toast('❌ ' + e.message, 'error');
+
+    if (e.message.includes('ไม่พบข้อความ')) {
+      setTimeout(() => toast('💡 แนะนำ: ถ่ายในที่สว่าง วางบัตรให้ตรงกรอบ', 'warning'), 2000);
+    }
   }
 
   btn.disabled = false;
@@ -725,13 +736,13 @@ function extractID(text) {
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
-    const isAddr = /\d+\/?\d*/.test(line) &&
-      /(หมู่|ซ\.|ซอย|ต\.|ตำบล|อ\.|อำเภอ|จ\.|จังหวัด|แขวง|เขต)/.test(line);
+    const isAddr = /\d/.test(line) &&
+      /(หมู่|ซ\.|ซอย|ต\.|ตำบล|อ\.|อำเภอ|จ\.|จังหวัด|แขวง|เขต|ที่อยู่)/.test(line);
     if (isAddr) {
       let parts = [line];
-      for (let j = i+1; j < Math.min(i+3, lines.length); j++) {
-        if (!lines[j] || /(วัน|Date|เกิด|\d{4}.*\d{4})/.test(lines[j])) break;
-        if (/(หมู่|ตำบล|อำเภอ|จังหวัด|แขวง|เขต|\d{5})/.test(lines[j])) parts.push(lines[j]);
+      for (let j = i+1; j < Math.min(i+4, lines.length); j++) {
+        if (!lines[j] || /(วัน|Date|เกิด|เพศ|สัญชาติ|ศาสนา)/.test(lines[j])) break;
+        if (/(หมู่|ตำบล|อำเภอ|จังหวัด|แขวง|เขต|รหัสไปรษณีย์|\d{5})/.test(lines[j])) parts.push(lines[j]);
       }
       address = parts.join(' ').replace(/\s+/g,' ').trim(); break;
     }
@@ -805,16 +816,21 @@ function pill(id, msg, type) {
 ══════════════════════════════════════ */
 async function submitToSheet() {
   const url = document.getElementById('sheetUrl').value.trim();
+  const sheetName = document.getElementById('sheetName').value||'Sheet1';
+  
   const payload = {
-    sheet:    document.getElementById('sheetName').value||'Sheet1',
+    sheet:    sheetName,
+    assignee: document.getElementById('f_assignee').value,
     fullname: document.getElementById('f_fullname').value,
     address:  document.getElementById('f_address').value,
-    assignee: document.getElementById('f_assignee').value,
     postcode: document.getElementById('f_postcode').value,
     phone:    fmtPhone(document.getElementById('f_phone').value),
     qty:      document.getElementById('f_qty').value||1,
     note:     document.getElementById('f_note').value,
+    time:     new Date().toLocaleString('th-TH'),
+    status:   'pending'
   };
+  
   if (!payload.fullname && !payload.assignee) { toast('กรุณากรอกข้อมูลอย่างน้อยหนึ่งช่อง','error'); return; }
 
   const btn = document.getElementById('submitBtn');
@@ -823,11 +839,11 @@ async function submitToSheet() {
   btn.disabled = true;
   btn.insertAdjacentHTML('afterbegin','<div class="spinner" style="position:absolute;left:18px"></div>');
 
-  const rec = { ...payload, time: new Date().toLocaleString('th-TH'), status:'pending' };
+  const rec = { ...payload };
 
   if (url) {
     try {
-      await fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+      const response = await fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
       rec.status = 'ok'; toast('✅ บันทึกสำเร็จ!','success');
     } catch(e) { rec.status = 'error'; toast('❌ '+e.message,'error'); }
   } else {
