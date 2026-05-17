@@ -608,10 +608,7 @@ async function callOCR(key, file, engine = '2') {
   const fd = new FormData();
   fd.append('file', file);
   fd.append('apikey', key);
-  // Engine 1: ส่ง language=tha ได้ / Engine 2: ห้ามส่ง language (E201 error)
-  if (engine === '1') {
-    fd.append('language', 'tha');
-  }
+  fd.append('language', 'tha');   // ทั้ง Engine 1 และ 2 รับได้ (Engine 2 จะ auto-detect ถ้าไม่รู้จัก)
   fd.append('isOverlayRequired', 'false');
   fd.append('detectOrientation', 'true');
   fd.append('scale', 'true');
