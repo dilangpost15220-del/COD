@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Thai ID OCR Pro</title>
+<title>โปรแกรมถ่ายภาพเพื่อสั่งจอง PC ฟุตบอลโลก 2026</title>
 <style>
   :root {
     --primary: #DC2626;
@@ -50,7 +50,7 @@
     0%, 100% { transform: scale(1); }
     50% { transform: scale(1.1); }
   }
-  .header h1 { font-size: 1.4rem; font-weight: 700; margin-bottom: 4px; position: relative; }
+  .header h1 { font-size: 1.3rem; font-weight: 700; margin-bottom: 4px; position: relative; line-height: 1.4; }
   .header p { font-size: 0.8rem; opacity: 0.9; position: relative; }
   
   .card {
@@ -117,9 +117,10 @@
     box-shadow: 0 2px 8px rgba(0,0,0,0.2);
   }
   
+  /* 🔧 แก้ไขส่วน Preview ให้พอดีรูปบัตรอัตโนมัติ */
   .preview-box {
     width: 100%;
-    aspect-ratio: 16/9;
+    /* ลบ aspect-ratio: 16/9 ออก เพื่อให้กล่องปรับตามรูปจริง */
     background: #FFFFFF;
     border: 2px dashed var(--border);
     border-radius: var(--radius);
@@ -128,14 +129,18 @@
     justify-content: center;
     overflow: hidden;
     position: relative;
-    transition: all 0.3s ease;
+    padding: 12px;
     min-height: 200px;
+    transition: all 0.3s ease;
   }
   .preview-box img {
-    width: 100%; 
-    height: 100%;
+    max-width: 100%;
+    max-height: 500px;
+    width: auto;
+    height: auto;
     object-fit: contain;
     display: none;
+    border-radius: 8px;
   }
   .preview-box img.active { 
     display: block !important; 
@@ -246,6 +251,7 @@
   .form-row { display: flex; gap: 8px; }
   .form-row .form-group { flex: 1; }
   
+  /* ⚙️ ซ่อนการตั้งค่าเริ่มต้น */
   .settings-card { display: none; }
   .settings-card.active { display: block; }
   .settings-tip {
@@ -303,7 +309,7 @@
 
 <div class="app-container">
   <div class="header">
-    <h1>🪪 Thai ID OCR Pro</h1>
+    <h1>⚽ โปรแกรมถ่ายภาพเพื่อสั่งจอง PC ฟุตบอลโลก 2026</h1>
     <p>สแกนบัตรประชาชนด้วย AI OCR</p>
   </div>
 
@@ -314,7 +320,7 @@
       <div class="camera-overlay"></div>
       <button class="camera-toggle" id="btnToggleCamera">🔄</button>
       <div class="camera-controls">
-        <button class="btn btn-success" id="btnCapture" style="flex: 0 0 130px;">📸 ถ่ายภาพ</button>
+        <button class="btn btn-success" id="btnCapture" style="flex: 0 0 130px;"> ถ่ายภาพ</button>
         <button class="btn btn-danger" id="btnCancelCamera" style="flex: 0 0 80px;">✕ ยกเลิก</button>
       </div>
     </div>
@@ -382,6 +388,7 @@
     </div>
   </div>
 
+  <!-- ⚙️ การตั้งค่า (ซ่อนเริ่มต้น) -->
   <div class="card settings-card" id="settingsCard">
     <div class="section-title">
       <h3>⚙️ ตั้งค่าระบบ</h3>
@@ -390,11 +397,11 @@
       ✅ API Key และ URL ถูกตั้งค่าไว้แล้วในโค้ด
     </div>
     <div class="form-group">
-      <label>🔍 OCR.space API Key</label>
+      <label> OCR.space API Key</label>
       <input type="text" id="apiKey" placeholder="วาง API Key ที่นี่">
     </div>
     <div class="form-group">
-      <label>📊 Google Sheets URL</label>
+      <label> Google Sheets URL</label>
       <input type="text" id="sheetsUrl" placeholder="https://script.google.com/macros/s/...">
     </div>
     <div class="form-group">
@@ -409,7 +416,7 @@
 
   <div class="card">
     <div class="section-title">
-      <h3>📊 ประวัติ</h3>
+      <h3> ประวัติ</h3>
       <button class="btn btn-secondary btn-icon" id="btnClearHistory" style="width: 32px; height: 32px; font-size: 0.8rem;">🗑</button>
     </div>
     <div class="history-list" id="historyList">
@@ -429,7 +436,7 @@
 const CONFIG = {
   OCR_API_KEY: 'K89547989888957',
   SHEETS_URL: 'https://script.google.com/macros/s/AKfycbz--nqIv3WPRVJ_2_92zWmP7cSzeiZMNoibdZ7eb-5RKAkDHcJwX0YvPVwEEmz8HzGtSA/exec',
-  SHEET_NAME: 'Data'
+  SHEET_NAME: 'OCR_Records'
 };
 
 let currentStream = null;
@@ -447,16 +454,13 @@ const previewImg = document.getElementById('previewImg');
 const previewPlaceholder = document.getElementById('previewPlaceholder');
 
 function showPreview(imageUrl) {
-  console.log('Showing preview:', imageUrl);
   if (capturedImageUrl) {
     URL.revokeObjectURL(capturedImageUrl);
   }
   capturedImageUrl = imageUrl;
   previewImg.src = imageUrl;
   previewImg.classList.add('active');
-  previewImg.style.display = 'block';
   previewPlaceholder.classList.add('hidden');
-  previewPlaceholder.style.display = 'none';
 }
 
 function hidePreview() {
@@ -466,9 +470,7 @@ function hidePreview() {
   }
   previewImg.src = '';
   previewImg.classList.remove('active');
-  previewImg.style.display = 'none';
   previewPlaceholder.classList.remove('hidden');
-  previewPlaceholder.style.display = 'block';
 }
 
 async function startCamera() {
@@ -515,12 +517,11 @@ function captureImage() {
   captureCanvas.toBlob((blob) => {
     capturedImageBlob = blob;
     const url = URL.createObjectURL(blob);
-    console.log('Image captured, URL:', url);
     showPreview(url);
     cameraContainer.classList.remove('active');
     captureButtons.classList.remove('hidden');
     mainButtons.classList.add('hidden');
-    previewBox.style.display = 'block';
+    previewBox.style.display = 'flex'; // 🔧 ใช้ flex เพื่อให้จัดกึ่งกลาง & ปรับขนาดอัตโนมัติ
     stopCamera();
   }, 'image/jpeg', 0.9);
 }
@@ -666,7 +667,7 @@ function loadSettings() {
 }
 loadSettings();
 
-// Toggle Settings - ซ่อน/แสดง
+// ️ Toggle Settings
 $('btnSettings').onclick = () => {
   $('settingsCard').classList.toggle('active');
   if ($('settingsCard').classList.contains('active')) {
@@ -706,7 +707,7 @@ $('galleryInput').addEventListener('change', (e) => {
     showPreview(url);
     mainButtons.classList.add('hidden');
     captureButtons.classList.remove('hidden');
-    previewBox.style.display = 'block';
+    previewBox.style.display = 'flex';
   }
 });
 
@@ -749,7 +750,7 @@ async function runOCR(file) {
 
     setStatus('✅ สแกนสำเร็จ', 'success');
   } catch (err) {
-    setStatus(`❌ ${err.message}`, 'error');
+    setStatus(` ${err.message}`, 'error');
   }
 }
 
