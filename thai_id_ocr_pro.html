@@ -2,813 +2,809 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>สแกนบัตรประชาชนจอง PC บอลโลก 2026</title>
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Prompt:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-*{margin:0;padding:0;box-sizing:border-box;}
-:root{
-  --bg:#0a0f1e;
-  --surface:#111827;
-  --surface2:#1a2235;
-  --surface3:#222d42;
-  --border:rgba(99,132,255,0.18);
-  --border2:rgba(99,132,255,0.35);
-  --accent:#4f7cff;
-  --accent2:#7c3aed;
-  --success:#10b981;
-  --warning:#f59e0b;
-  --danger:#ef4444;
-  --text:#e8eaf6;
-  --muted:#8892b0;
-  --font:'Sarabun',sans-serif;
-  --heading:'Prompt',sans-serif;
-}
-body{
-  background:var(--bg);
-  font-family:var(--font);
-  color:var(--text);
-  min-height:100vh;
-  padding:0;
-  overflow-x:hidden;
-}
-/* Animated background */
-body::before{
-  content:'';
-  position:fixed;
-  inset:0;
-  background:
-    radial-gradient(ellipse 80% 50% at 20% 20%,rgba(79,124,255,0.08) 0%,transparent 60%),
-    radial-gradient(ellipse 60% 40% at 80% 80%,rgba(124,58,237,0.07) 0%,transparent 60%);
-  pointer-events:none;
-  z-index:0;
-}
-
-/* HEADER */
-.header{
-  position:relative;
-  z-index:1;
-  padding:28px 32px 0;
-  display:flex;
-  align-items:center;
-  gap:16px;
-}
-.header-icon{
-  width:52px;height:52px;
-  background:linear-gradient(135deg,var(--accent),var(--accent2));
-  border-radius:16px;
-  display:flex;align-items:center;justify-content:center;
-  font-size:26px;
-  flex-shrink:0;
-}
-.header-title{font-family:var(--heading);font-size:26px;font-weight:700;letter-spacing:-0.5px;}
-.header-sub{font-size:13px;color:var(--muted);margin-top:2px;}
-.header-badge{
-  margin-left:auto;
-  background:rgba(16,185,129,0.12);
-  border:1px solid rgba(16,185,129,0.3);
-  color:#10b981;
-  font-size:12px;font-weight:600;
-  padding:5px 14px;border-radius:20px;
-  display:flex;align-items:center;gap:6px;
-}
-.dot{width:7px;height:7px;border-radius:50%;background:#10b981;animation:pulse 2s infinite;}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-
-/* MAIN LAYOUT */
-.main{
-  position:relative;z-index:1;
-  padding:24px 32px 32px;
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:24px;
-  max-width:1400px;
-  margin:0 auto;
-}
-
-/* CARD */
-.card{
-  background:var(--surface);
-  border:1px solid var(--border);
-  border-radius:20px;
-  padding:22px;
-  position:relative;
-  overflow:hidden;
-}
-.card::before{
-  content:'';
-  position:absolute;
-  top:0;left:0;right:0;
-  height:2px;
-  background:linear-gradient(90deg,transparent,var(--border2),transparent);
-}
-.card-title{
-  font-family:var(--heading);
-  font-size:13px;
-  font-weight:600;
-  color:var(--muted);
-  text-transform:uppercase;
-  letter-spacing:1.5px;
-  margin-bottom:16px;
-  display:flex;align-items:center;gap:8px;
-}
-.card-title span{
-  width:20px;height:20px;
-  background:rgba(79,124,255,0.15);
-  border-radius:6px;
-  display:flex;align-items:center;justify-content:center;
-  font-size:11px;
-}
-
-/* PREVIEW */
-.preview-area{
-  height:260px;
-  background:rgba(0,0,0,0.3);
-  border:2px dashed var(--border);
-  border-radius:16px;
-  display:flex;flex-direction:column;
-  align-items:center;justify-content:center;
-  gap:10px;
-  overflow:hidden;
-  position:relative;
-  transition:.3s;
-}
-.preview-area.has-image{border-style:solid;border-color:var(--border2);}
-.preview-area img{width:100%;height:100%;object-fit:contain;display:none;}
-.placeholder-icon{font-size:36px;opacity:.3;}
-.placeholder-text{font-size:14px;color:var(--muted);}
-
-/* BUTTONS */
-.btn-row{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;}
-.btn{
-  padding:11px 18px;
-  border:none;border-radius:12px;
-  cursor:pointer;
-  font-family:var(--font);
-  font-size:14px;font-weight:600;
-  display:inline-flex;align-items:center;gap:7px;
-  transition:.25s;
-  white-space:nowrap;
-}
-.btn:hover{transform:translateY(-2px);}
-.btn:active{transform:translateY(0);}
-.btn-camera{background:linear-gradient(135deg,#1d4ed8,#2563eb);color:#fff;}
-.btn-gallery{background:linear-gradient(135deg,#6d28d9,#7c3aed);color:#fff;}
-.btn-scan{background:linear-gradient(135deg,#065f46,#059669);color:#fff;flex:1;}
-.btn-clear{background:var(--surface3);color:var(--muted);border:1px solid var(--border);}
-label.btn{display:inline-flex;}
-label.btn input{display:none;}
-
-/* PROGRESS */
-.progress-wrap{margin-top:14px;}
-.progress-track{
-  height:6px;background:rgba(0,0,0,0.4);
-  border-radius:99px;overflow:hidden;
-}
-.progress-bar{
-  height:100%;width:0%;
-  background:linear-gradient(90deg,var(--accent),var(--accent2));
-  border-radius:99px;
-  transition:.15s;
-}
-.status-text{font-size:12px;color:var(--muted);margin-top:7px;min-height:18px;}
-
-/* FORM FIELDS */
-.fields-grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:12px;
-}
-.field{display:flex;flex-direction:column;gap:5px;}
-.field.full{grid-column:1/-1;}
-.field label{
-  font-size:12px;color:var(--muted);font-weight:600;
-  letter-spacing:.5px;text-transform:uppercase;
-}
-.field input,.field textarea{
-  background:var(--surface3);
-  border:1px solid var(--border);
-  border-radius:10px;
-  padding:9px 12px;
-  color:var(--text);
-  font-family:var(--font);
-  font-size:15px;
-  outline:none;
-  transition:.2s;
-  width:100%;
-}
-.field input:focus,.field textarea:focus{
-  border-color:var(--accent);
-  background:rgba(79,124,255,0.05);
-  box-shadow:0 0 0 3px rgba(79,124,255,0.12);
-}
-.field textarea{resize:vertical;min-height:60px;}
-.field input::placeholder,.field textarea::placeholder{color:var(--muted);opacity:.5;}
-
-/* OCR RESULT HIGHLIGHT */
-.ocr-highlight{
-  background:rgba(79,124,255,0.1);
-  border-color:rgba(79,124,255,0.4) !important;
-}
-
-/* DIVIDER */
-.divider{
-  grid-column:1/-1;
-  border:none;
-  border-top:1px solid var(--border);
-  margin:2px 0;
-}
-
-/* SECTION LABEL */
-.section-label{
-  grid-column:1/-1;
-  font-size:11px;color:var(--accent);
-  font-weight:600;letter-spacing:1.5px;text-transform:uppercase;
-  display:flex;align-items:center;gap:8px;
-  margin-top:4px;
-}
-.section-label::before,.section-label::after{
-  content:'';flex:1;height:1px;
-  background:linear-gradient(90deg,transparent,var(--border));
-}
-.section-label::after{background:linear-gradient(270deg,transparent,var(--border));}
-
-/* SUBMIT BUTTON */
-.btn-submit{
-  width:100%;
-  padding:14px;
-  background:linear-gradient(135deg,var(--accent),var(--accent2));
-  border:none;border-radius:14px;
-  color:#fff;font-family:var(--heading);
-  font-size:16px;font-weight:700;
-  cursor:pointer;
-  display:flex;align-items:center;justify-content:center;gap:10px;
-  margin-top:16px;
-  transition:.25s;
-  letter-spacing:.3px;
-  position:relative;
-  overflow:hidden;
-}
-.btn-submit::before{
-  content:'';
-  position:absolute;inset:0;
-  background:linear-gradient(135deg,rgba(255,255,255,0.1),transparent);
-}
-.btn-submit:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(79,124,255,0.35);}
-.btn-submit:active{transform:translateY(0);}
-.btn-submit:disabled{opacity:.5;cursor:not-allowed;transform:none;}
-
-/* SHEET CONFIG */
-.sheet-config{
-  background:var(--surface2);
-  border:1px solid var(--border);
-  border-radius:14px;
-  padding:16px;
-  margin-bottom:14px;
-}
-.sheet-row{display:flex;gap:10px;align-items:flex-end;}
-.sheet-row .field{flex:1;}
-.sheet-status{
-  font-size:12px;margin-top:8px;padding:6px 12px;
-  border-radius:8px;display:none;
-}
-.sheet-ok{background:rgba(16,185,129,0.1);color:#10b981;border:1px solid rgba(16,185,129,0.2);}
-.sheet-err{background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.2);}
-
-/* HISTORY TABLE */
-.history-wrap{
-  grid-column:1/-1;
-  margin-top:4px;
-}
-.history-table{
-  width:100%;border-collapse:collapse;font-size:13px;
-}
-.history-table th{
-  text-align:left;padding:8px 12px;
-  color:var(--muted);font-weight:600;
-  border-bottom:1px solid var(--border);
-  font-size:12px;letter-spacing:.5px;text-transform:uppercase;
-}
-.history-table td{
-  padding:9px 12px;
-  border-bottom:1px solid rgba(255,255,255,0.04);
-  vertical-align:middle;
-}
-.history-table tr:last-child td{border-bottom:none;}
-.history-table tr:hover td{background:rgba(255,255,255,0.02);}
-.tag{
-  display:inline-block;padding:3px 10px;border-radius:20px;
-  font-size:11px;font-weight:600;
-}
-.tag-ok{background:rgba(16,185,129,0.12);color:#10b981;}
-.tag-err{background:rgba(239,68,68,0.12);color:#ef4444;}
-.tag-pen{background:rgba(245,158,11,0.12);color:#f59e0b;}
-.empty-history{
-  text-align:center;padding:30px;
-  color:var(--muted);font-size:14px;
-}
-.count-badge{
-  background:rgba(79,124,255,0.15);
-  color:var(--accent);
-  font-size:11px;font-weight:700;
-  padding:2px 8px;border-radius:20px;
-  margin-left:8px;
-}
-
-/* TOAST */
-.toast{
-  position:fixed;bottom:30px;right:30px;
-  background:var(--surface2);
-  border:1px solid var(--border2);
-  border-radius:14px;padding:14px 20px;
-  font-size:14px;font-weight:500;
-  z-index:9999;
-  transform:translateY(80px);opacity:0;
-  transition:.3s cubic-bezier(.34,1.56,.64,1);
-  display:flex;align-items:center;gap:10px;
-  min-width:240px;
-  box-shadow:0 12px 40px rgba(0,0,0,.5);
-}
-.toast.show{transform:translateY(0);opacity:1;}
-.toast.success{border-color:rgba(16,185,129,0.4);}
-.toast.error{border-color:rgba(239,68,68,0.4);}
-
-/* SPINNER */
-@keyframes spin{to{transform:rotate(360deg)}}
-.spinner{
-  width:16px;height:16px;
-  border:2px solid rgba(255,255,255,.2);
-  border-top-color:#fff;
-  border-radius:50%;
-  animation:spin .8s linear infinite;
-  flex-shrink:0;
-}
-
-@media(max-width:900px){
-  .main{grid-template-columns:1fr;padding:16px;}
-  .header{padding:20px 16px 0;flex-wrap:wrap;}
-  .fields-grid{grid-template-columns:1fr;}
-  .history-wrap .card{display:none;}
-}
+  :root {
+    --primary: #DC2626;
+    --primary-light: #EF4444;
+    --primary-dark: #991B1B;
+    --bg: #FFFFFF;
+    --card: #FFFFFF;
+    --text: #111827;
+    --text-muted: #6B7280;
+    --border: #E5E7EB;
+    --success: #10B981;
+    --error: #DC2626;
+    --warning: #F59E0B;
+    --radius: 16px;
+    --shadow: 0 4px 24px rgba(220, 38, 38, 0.12);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+  body { background: var(--bg); color: var(--text); padding: 0; max-width: 100%; min-height: 100vh; }
+  
+  .app-container { max-width: 480px; margin: 0 auto; padding-bottom: 20px; }
+  
+  .header {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: white;
+    padding: 24px 16px 28px;
+    text-align: center;
+    border-radius: 0 0 28px 28px;
+    box-shadow: 0 4px 20px rgba(220, 38, 38, 0.3);
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+    animation: pulse 4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+  }
+  .header h1 { font-size: 1.5rem; font-weight: 800; margin-bottom: 6px; position: relative; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+  .header p { font-size: 0.85rem; opacity: 0.95; position: relative; font-weight: 500; }
+  
+  .card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 16px;
+    box-shadow: var(--shadow-sm);
+    margin: 12px 12px;
+    border: 1px solid var(--border);
+  }
+  
+  .camera-container {
+    width: 100%;
+    aspect-ratio: 4/3;
+    background: #000;
+    border-radius: var(--radius);
+    overflow: hidden;
+    position: relative;
+    display: none;
+    border: 2px solid var(--primary);
+  }
+  .camera-container.active { display: block; }
+  #cameraPreview { width: 100%; height: 100%; object-fit: cover; }
+  .camera-overlay {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 85%; height: 55%;
+    border: 3px solid rgba(255,255,255,0.9);
+    border-radius: 12px;
+    pointer-events: none;
+    box-shadow: 0 0 0 9999px rgba(0,0,0,0.6);
+  }
+  .camera-overlay::before {
+    content: '🪪 วางบัตรให้อยู่ในกรอบ';
+    position: absolute;
+    top: -32px; left: 0; right: 0;
+    text-align: center;
+    color: white;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  }
+  .camera-overlay::after {
+    content: 'ถือนิ่งๆ แล้วกดถ่ายกล้องหลัง';
+    position: absolute;
+    bottom: -28px; left: 0; right: 0;
+    text-align: center;
+    color: rgba(255,255,255,0.9);
+    font-size: 0.75rem;
+  }
+  .camera-controls {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 16px;
+    background: linear-gradient(transparent, rgba(0,0,0,0.9));
+    display: flex; gap: 8px; justify-content: center;
+  }
+  .camera-toggle {
+    position: absolute; top: 12px; right: 12px;
+    background: rgba(255,255,255,0.95);
+    border: 2px solid var(--primary);
+    border-radius: 50%;
+    width: 42px; height: 42px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem;
+    z-index: 10;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+  
+  .preview-box {
+    width: 100%;
+    aspect-ratio: 16/9;
+    background: #F9FAFB;
+    border: 2px dashed var(--primary);
+    border-radius: var(--radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+    transition: all 0.3s ease;
+  }
+  .preview-box img {
+    width: 100%; height: 100%;
+    object-fit: contain;
+    display: none;
+  }
+  .preview-box img.active { display: block; }
+  .preview-box .placeholder {
+    color: var(--text-muted);
+    text-align: center;
+    padding: 20px;
+  }
+  .preview-box .placeholder.hidden { display: none; }
+  .preview-box .placeholder-icon { font-size: 3rem; margin-bottom: 10px; }
+  .preview-box .placeholder-text { font-size: 0.85rem; }
+  
+  .btn-row { display: flex; gap: 8px; margin-top: 12px; }
+  .btn {
+    flex: 1;
+    padding: 14px 16px;
+    border: none;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary {
+    background: var(--primary);
+    color: white;
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+  }
+  .btn-secondary { background: #111827; color: white; border: 2px solid #374151; }
+  .btn-danger { background: #FEE2E2; color: var(--primary); border: 2px solid var(--primary-light); }
+  .btn-success {
+    background: #111827;
+    color: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+  .btn-warning { background: #FEF3C7; color: #92400E; border: 2px solid #F59E0B; }
+  .btn-large { padding: 16px; font-size: 1rem; }
+  .btn-icon { flex: 0 0 auto; width: 44px; height: 44px; padding: 0; }
+  
+  .status {
+    margin: 8px 12px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: none;
+    align-items: center;
+    gap: 8px;
+    animation: slideIn 0.3s ease;
+    border: 2px solid transparent;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .status.loading { display: flex; background: #FEF3C7; color: #92400E; border-color: #F59E0B; }
+  .status.success { display: flex; background: #D1FAE5; color: #065F46; border-color: var(--success); }
+  .status.error { display: flex; background: #FEE2E2; color: #991B1B; border-color: var(--primary); }
+  
+  .section-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--primary);
+  }
+  .section-title h3 {
+    font-size: 1.05rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--primary);
+  }
+  .section-title span {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+  .form-group { margin-bottom: 12px; }
+  .form-group label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text);
+    margin-bottom: 6px;
+    font-weight: 700;
+  }
+  .form-group input, .form-group textarea {
+    width: 100%;
+    padding: 12px 14px;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+    background: white;
+    font-weight: 500;
+  }
+  .form-group input:focus, .form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
+    background: white;
+  }
+  .form-group textarea { min-height: 70px; resize: vertical; }
+  .form-row { display: flex; gap: 8px; }
+  .form-row .form-group { flex: 1; }
+  
+  .settings-card { display: none; }
+  .settings-card.active { display: block; }
+  .settings-tip {
+    background: linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%);
+    padding: 12px;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    color: #991B1B;
+    margin-bottom: 12px;
+    line-height: 1.5;
+    border: 2px solid var(--primary-light);
+    font-weight: 600;
+  }
+  .settings-tip a { color: var(--primary); font-weight: 700; }
+  
+  .history-list { max-height: 200px; overflow-y: auto; }
+  .history-item {
+    padding: 12px;
+    border-bottom: 2px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .history-item:last-child { border-bottom: none; }
+  .history-name { font-weight: 700; font-size: 0.9rem; color: var(--primary); }
+  .history-addr { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+  .history-time { font-size: 0.7rem; color: var(--text-muted); white-space: nowrap; font-weight: 600; }
+  .history-empty {
+    color: var(--text-muted);
+    text-align: center;
+    padding: 24px;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+  
+  .bottom-bar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: #111827;
+    padding: 12px;
+    box-shadow: 0 -4px 20px rgba(220, 38, 38, 0.3);
+    display: flex;
+    gap: 8px;
+    z-index: 100;
+  }
+  .bottom-bar .btn { padding: 14px; }
+  .spacer { height: 80px; }
+  
+  .hidden { display: none !important; }
+  input[type="file"] { display: none; }
+  
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 4px; }
 </style>
 </head>
 <body>
 
-<div class="header">
-  <div class="header-icon">🪪</div>
-  <div>
-    <div class="header-title">สแกนบัตรประชาชนจอง PC บอลโลก 2026</div>
-    <div class="header-sub">ระบบสแกนบัตรประชาชนและบันทึกข้อมูลอัตโนมัติ</div>
+<div class="app-container">
+  <div class="header">
+    <h1>🪪 สแกนบัตรประชาชนจอง PC บอลโลก 2026</h1>
+    <p>ระบบสแกนบัตรประชาชนด้วย AI OCR</p>
   </div>
-  <div class="header-badge"><span class="dot"></span> พร้อมทำงาน</div>
+
+  <div class="card" style="margin-top: -12px; position: relative; z-index: 1;">
+    <div class="camera-container" id="cameraContainer">
+      <video id="cameraPreview" autoplay playsinline></video>
+      <canvas id="captureCanvas" style="display:none;"></canvas>
+      <div class="camera-overlay"></div>
+      <button class="camera-toggle" id="btnToggleCamera">🔄</button>
+      <div class="camera-controls">
+        <button class="btn btn-success" id="btnCapture" style="flex: 0 0 130px;">📸 ถ่ายภาพ</button>
+        <button class="btn btn-danger" id="btnCancelCamera" style="flex: 0 0 80px;">✕ ยกเลิก</button>
+      </div>
+    </div>
+
+    <div class="preview-box" id="previewBox">
+      <div class="placeholder" id="previewPlaceholder">
+        <div class="placeholder-icon">🪪</div>
+        <div class="placeholder-text">แตะเพื่อเปิดกล้อง หรือใช้ปุ่มด้านล่าง</div>
+      </div>
+      <img id="previewImg">
+    </div>
+
+    <div class="btn-row" id="mainButtons">
+      <button class="btn btn-primary" id="btnCamera">📷 สแกนบัตรประชาชน</button>
+      <button class="btn btn-secondary btn-icon" id="btnGallery">🖼</button>
+    </div>
+
+    <div class="btn-row hidden" id="captureButtons">
+      <button class="btn btn-warning" id="btnRetake">🔄 ถ่ายใหม่</button>
+      <button class="btn btn-success" id="btnUsePhoto">✅ ใช้ภาพนี้</button>
+      <button class="btn btn-danger btn-icon" id="btnReset">✕</button>
+    </div>
+
+    <input type="file" id="galleryInput" accept="image/*">
+  </div>
+
+  <div id="statusBox" class="status"></div>
+
+  <div class="card">
+    <div class="section-title">
+      <h3>📋 ข้อมูลบัตร</h3>
+      <span>ดึงเฉพาะชื่อ/ที่อยู่</span>
+    </div>
+    <div class="form-group">
+      <label>ชื่อ-สกุล</label>
+      <input type="text" id="fullName" placeholder="รอการสแกน...">
+    </div>
+    <div class="form-group">
+      <label>ที่อยู่</label>
+      <textarea id="address" placeholder="รอการสแกน..."></textarea>
+    </div>
+    <div class="form-group">
+      <label>ข้อมูลเพิ่มเติม</label>
+      <input type="text" id="notes" placeholder="กรอกเพิ่มเติม (ไม่บังคับ)">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>ชื่อผู้รับงาน</label>
+        <input type="text" id="workerCode">
+      </div>
+      <div class="form-group">
+        <label>รหัสไปรษณีย์</label>
+        <input type="text" id="postalCode" maxlength="5" placeholder="00000">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>เบอร์โทร</label>
+        <input type="tel" id="phone" placeholder="0XX-XXX-XXXX">
+      </div>
+      <div class="form-group">
+        <label>จำนวน (ฉบับ)</label>
+        <input type="number" id="quantity" value="1" min="1">
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="settingsCard" class="settings-card">
+    <div class="section-title">
+      <h3>⚙️ ตั้งค่าระบบ</h3>
+    </div>
+    <div class="settings-tip">
+      ✅ API Key และ URL ถูกตั้งค่าไว้แล้วในโค้ด
+    </div>
+    <div class="form-group">
+      <label>🔍 OCR.space API Key</label>
+      <input type="text" id="apiKey" placeholder="วาง API Key ที่นี่">
+    </div>
+    <div class="form-group">
+      <label>📊 Google Sheets URL</label>
+      <input type="text" id="sheetsUrl" placeholder="https://script.google.com/macros/s/...">
+    </div>
+    <div class="form-group">
+      <label>Sheet Name</label>
+      <input type="text" id="sheetName" value="Data">
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" id="btnTestConn">🔗 ทดสอบ</button>
+      <button class="btn btn-primary" id="btnCloseSettings"> บันทึก</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">
+      <h3>📊 ประวัติ</h3>
+      <button class="btn btn-secondary btn-icon" id="btnClearHistory" style="width: 32px; height: 32px; font-size: 0.8rem;">🗑</button>
+    </div>
+    <div class="history-list" id="historyList">
+      <div class="history-empty">ยังไม่มีประวัติการบันทึก</div>
+    </div>
+  </div>
+
+  <div class="spacer"></div>
 </div>
 
-<div class="main">
-
-  <!-- LEFT: CAMERA + SCAN -->
-  <div>
-    <div class="card">
-      <div class="card-title"><span>📷</span> สแกนบัตรประชาชน</div>
-
-      <div class="preview-area" id="previewArea">
-        <img id="previewImg" alt="ภาพบัตร">
-        <div class="placeholder-icon" id="placeholderIcon">🪪</div>
-        <div class="placeholder-text" id="placeholderText">ถ่ายรูปหรือเลือกไฟล์บัตรประชาชน</div>
-      </div>
-
-      <div class="btn-row">
-        <label class="btn btn-camera">
-          📸 ถ่ายรูป
-          <input id="cameraInput" type="file" accept="image/*" capture="environment">
-        </label>
-        <label class="btn btn-gallery">
-          🖼 คลังภาพ
-          <input id="galleryInput" type="file" accept="image/*">
-        </label>
-        <button class="btn btn-clear" onclick="clearImage()">✕</button>
-      </div>
-
-      <div class="btn-row">
-        <button class="btn btn-scan" onclick="scanOCR()" id="scanBtn">
-          🔍 วิเคราะห์บัตร
-        </button>
-      </div>
-
-      <div class="progress-wrap">
-        <div class="progress-track"><div class="progress-bar" id="progressBar"></div></div>
-        <div class="status-text" id="statusText">พร้อมทำงาน</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- RIGHT: DATA FORM -->
-  <div>
-    <div class="card">
-      <div class="card-title"><span>📋</span> ข้อมูลบัตร & งาน</div>
-
-      <div class="fields-grid">
-
-        <!-- OCR Fields -->
-        <div class="section-label">ข้อมูลจากบัตร (OCR)</div>
-
-        <div class="field full">
-          <label>ชื่อ-นามสกุล</label>
-          <input type="text" id="f_fullname" placeholder="ยังไม่ได้สแกน">
-        </div>
-        <div class="field full">
-          <label>ที่อยู่</label>
-          <textarea id="f_address" placeholder="ยังไม่ได้สแกน" rows="2"></textarea>
-        </div>
-
-        <hr class="divider">
-
-        <!-- Manual Fields -->
-        <div class="section-label">ข้อมูลเพิ่มเติม</div>
-
-        <div class="field full">
-          <label>ผู้รับงาน</label>
-          <input type="text" id="f_assignee" placeholder="ชื่อพนักงาน / หน่วยงาน">
-        </div>
-
-        <div class="field">
-          <label>รหัสไปรษณีย์</label>
-          <input type="text" id="f_postcode" placeholder="10000" maxlength="5" inputmode="numeric">
-        </div>
-
-        <div class="field">
-          <label>เบอร์โทร</label>
-          <input type="tel" id="f_phone" placeholder="0812345678" maxlength="10" inputmode="tel">
-        </div>
-
-        <div class="field">
-          <label>จำนวน (ฉบับ)</label>
-          <input type="number" id="f_qty" placeholder="1" min="1" value="1">
-        </div>
-
-        <div class="field">
-          <label>หมายเหตุ</label>
-          <input type="text" id="f_note" placeholder="ข้อมูลเพิ่มเติม">
-        </div>
-
-      </div>
-
-      <button class="btn-submit" id="submitBtn" onclick="submitToSheet()">
-        <span id="submitIcon">📤</span>
-        <span id="submitLabel">บันทึกลง Google Sheets</span>
-      </button>
-    </div>
-  </div>
-
-  <!-- SHEET CONFIG FULL WIDTH -->
-  <div style="grid-column:1/-1;">
-    <div class="card">
-      <div class="card-title"><span>⚙️</span> ตั้งค่า Google Sheets</div>
-      <div class="sheet-config">
-        <div class="sheet-row">
-          <div class="field" style="flex:2">
-            <label>Google Apps Script Web App URL</label>
-            <input type="url" id="sheetUrl" placeholder="https://script.google.com/macros/s/XXXXXXXX/exec" oninput="saveConfig()">
-          </div>
-          <div class="field">
-            <label>Sheet Name</label>
-            <input type="text" id="sheetName" placeholder="Sheet1" value="Sheet1" oninput="saveConfig()">
-          </div>
-          <button class="btn btn-clear" style="margin-bottom:1px;" onclick="testSheet()">🔗 ทดสอบ</button>
-        </div>
-        <div class="sheet-status" id="sheetStatus"></div>
-        <div style="margin-top:10px;font-size:11px;color:var(--muted);line-height:1.7;">
-          💡 สร้าง Google Apps Script → ติดตั้งเป็น Web App → วาง URL ด้านบน
-          <a href="#" onclick="showHelp();return false;" style="color:var(--accent);text-decoration:none;"> ดูวิธีตั้งค่า ▸</a>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- HISTORY -->
-  <div class="history-wrap">
-    <div class="card">
-      <div class="card-title">
-        <span>📊</span> ประวัติการบันทึก
-        <span class="count-badge" id="historyCount">0</span>
-        <button class="btn btn-clear" style="margin-left:auto;padding:5px 12px;font-size:12px;" onclick="clearHistory()">ล้าง</button>
-      </div>
-      <div id="historyBody">
-        <div class="empty-history">ยังไม่มีประวัติการบันทึก</div>
-      </div>
-    </div>
-  </div>
-
-</div>
-
-<!-- TOAST -->
-<div class="toast" id="toast"></div>
-
-<!-- HELP MODAL (faux fixed) -->
-<div id="helpOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
-  <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:20px;padding:28px;max-width:540px;width:90%;position:relative;">
-    <button onclick="document.getElementById('helpOverlay').style.display='none'" style="position:absolute;top:16px;right:16px;background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;">✕</button>
-    <div style="font-family:var(--heading);font-size:18px;font-weight:700;margin-bottom:16px;">วิธีตั้งค่า Google Sheets</div>
-    <ol style="padding-left:20px;line-height:2.2;font-size:14px;color:var(--muted);">
-      <li>เปิด <strong style="color:var(--text)">Google Sheets</strong> แล้วสร้างไฟล์ใหม่</li>
-      <li>คลิก <strong style="color:var(--text)">Extensions → Apps Script</strong></li>
-      <li>วางโค้ดด้านล่างแทนที่โค้ดเดิม แล้วกด Save</li>
-      <li>คลิก <strong style="color:var(--text)">Deploy → New deployment → Web app</strong></li>
-      <li>ตั้ง Execute as: <strong style="color:var(--text)">Me</strong> / Who has access: <strong style="color:var(--text)">Anyone</strong></li>
-      <li>คัดลอก URL มาวางในช่อง Web App URL</li>
-    </ol>
-    <pre id="gasCode" style="background:rgba(0,0,0,.4);border:1px solid var(--border);border-radius:10px;padding:14px;font-size:11px;overflow:auto;max-height:200px;margin-top:12px;color:#a5f3fc;line-height:1.6;"></pre>
-    <button onclick="copyGas()" style="margin-top:12px;padding:9px 18px;background:var(--accent);border:none;border-radius:10px;color:#fff;font-family:var(--font);font-size:14px;cursor:pointer;">📋 คัดลอกโค้ด</button>
-  </div>
+<div class="bottom-bar">
+  <button class="btn btn-primary btn-large" id="btnSaveSheets">📤 บันทึกลง Google Sheets</button>
+  <button class="btn btn-secondary btn-icon btn-large" id="btnSettings" style="flex: 0 0 56px;">⚙️</button>
 </div>
 
 <script>
+const CONFIG = {
+  OCR_API_KEY: 'K89547989888957',
+  SHEETS_URL: 'https://script.google.com/macros/s/AKfycbz--nqIv3WPRVJ_2_92zWmP7cSzeiZMNoibdZ7eb-5RKAkDHcJwX0YvPVwEEmz8HzGtSA/exec',
+  SHEET_NAME: 'Data'
+};
 
-/* ─── GAS CODE TEMPLATE ─── */
-const GAS_CODE = `function doPost(e) {
-  var data = JSON.parse(e.postData.contents);
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName(data.sheet || 'Sheet1');
-  if (!sheet) sheet = ss.insertSheet(data.sheet || 'Sheet1');
-  
-  if (sheet.getLastRow() === 0) {
-    sheet.appendRow([
-      'เวลาบันทึก','ชื่อ-นามสกุล','ที่อยู่',
-      'ผู้รับงาน','รหัสไปรษณีย์','เบอร์โทร',
-      'จำนวน(ฉบับ)','หมายเหตุ'
-    ]);
-    sheet.getRange(1,1,1,8).setFontWeight('bold')
-      .setBackground('#4f7cff').setFontColor('#ffffff');
-  }
-  
-  sheet.appendRow([
-    new Date().toLocaleString('th-TH'),
-    data.fullname, data.address,
-    data.assignee, data.postcode,
-    data.phone, data.qty, data.note
-  ]);
-  
-  return ContentService
-    .createTextOutput(JSON.stringify({status:'ok'}))
-    .setMimeType(ContentService.MimeType.JSON);
+let currentStream = null;
+let currentFacingMode = 'environment';
+let capturedImageBlob = null;
+
+const cameraContainer = document.getElementById('cameraContainer');
+const cameraPreview = document.getElementById('cameraPreview');
+const captureCanvas = document.getElementById('captureCanvas');
+const mainButtons = document.getElementById('mainButtons');
+const captureButtons = document.getElementById('captureButtons');
+const previewBox = document.getElementById('previewBox');
+const previewImg = document.getElementById('previewImg');
+const previewPlaceholder = document.getElementById('previewPlaceholder');
+
+function showPreview(imageUrl) {
+  previewImg.src = imageUrl;
+  previewImg.classList.add('active');
+  previewPlaceholder.classList.add('hidden');
 }
 
-function doGet(e) {
-  return ContentService
-    .createTextOutput(JSON.stringify({status:'ok',message:'สแกนบัตรประชาชนจอง PC บอลโลก 2026 connected'}))
-    .setMimeType(ContentService.MimeType.JSON);
-}`;
-
-document.getElementById('gasCode').textContent = GAS_CODE;
-
-/* ─── STATE ─── */
-let selectedFile = null;
-let history = JSON.parse(localStorage.getItem('ocr_history') || '[]');
-renderHistory();
-loadConfig();
-
-/* ─── IMAGE LOADING ─── */
-function loadImage(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  selectedFile = file;
-  const reader = new FileReader();
-  reader.onload = () => {
-    const img = document.getElementById('previewImg');
-    img.src = reader.result;
-    img.style.display = 'block';
-    document.getElementById('placeholderIcon').style.display = 'none';
-    document.getElementById('placeholderText').style.display = 'none';
-    document.getElementById('previewArea').classList.add('has-image');
-  };
-  reader.readAsDataURL(file);
-}
-document.getElementById('cameraInput').addEventListener('change', loadImage);
-document.getElementById('galleryInput').addEventListener('change', loadImage);
-
-function clearImage() {
-  selectedFile = null;
-  const img = document.getElementById('previewImg');
-  img.src = ''; img.style.display = 'none';
-  document.getElementById('placeholderIcon').style.display = '';
-  document.getElementById('placeholderText').style.display = '';
-  document.getElementById('previewArea').classList.remove('has-image');
-  document.getElementById('cameraInput').value = '';
-  document.getElementById('galleryInput').value = '';
+function hidePreview() {
+  previewImg.src = '';
+  previewImg.classList.remove('active');
+  previewPlaceholder.classList.remove('hidden');
 }
 
-/* ─── OCR ─── */
-async function scanOCR() {
-  if (!selectedFile) { toast('กรุณาเลือกหรือถ่ายรูปบัตรก่อน', 'error'); return; }
-  const btn = document.getElementById('scanBtn');
-  btn.disabled = true;
-  btn.innerHTML = '<div class="spinner"></div> กำลังวิเคราะห์...';
-
-  document.getElementById('f_fullname').value = '';
-  document.getElementById('f_address').value = '';
-  document.getElementById('progressBar').style.width = '0%';
-
+async function startCamera() {
   try {
-    const { data: { text } } = await Tesseract.recognize(selectedFile, 'tha+eng', {
-      logger: m => {
-        if (m.progress) document.getElementById('progressBar').style.width = (m.progress * 100) + '%';
-        if (m.status) document.getElementById('statusText').textContent = m.status;
-      }
-    });
-
-    const result = extractThaiID(text);
-    setField('f_fullname', result.fullname);
-    setField('f_address', result.address);
-    document.getElementById('statusText').textContent = '✅ วิเคราะห์สำเร็จ';
-    toast('OCR สำเร็จ! ตรวจสอบข้อมูลก่อนบันทึก', 'success');
+    if (currentStream) {
+      currentStream.getTracks().forEach(track => track.stop());
+    }
+    const constraints = {
+      video: { facingMode: currentFacingMode, width: { ideal: 1920 }, height: { ideal: 1080 } }
+    };
+    currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+    cameraPreview.srcObject = currentStream;
+    cameraContainer.classList.add('active');
+    previewBox.style.display = 'none';
+    mainButtons.classList.add('hidden');
   } catch (err) {
-    document.getElementById('statusText').textContent = '❌ เกิดข้อผิดพลาด';
-    toast('OCR ล้มเหลว: ' + err.message, 'error');
-  }
-
-  btn.disabled = false;
-  btn.innerHTML = '🔍 วิเคราะห์บัตร';
-}
-
-function setField(id, val) {
-  const el = document.getElementById(id);
-  el.value = val === 'ไม่พบข้อมูล' ? '' : val;
-  if (val && val !== 'ไม่พบข้อมูล') {
-    el.classList.add('ocr-highlight');
-    setTimeout(() => el.classList.remove('ocr-highlight'), 2500);
+    setStatus('❌ ไม่สามารถเข้าถึงกล้องได้', 'error');
   }
 }
 
-/* ─── EXTRACT ─── */
-function extractThaiID(text) {
-  const lines = text.split('\n').map(x => x.trim()).filter(x => x !== '');
-  let fullname = '', address = '';
-
-  for (let i = 0; i < lines.length; i++) {
-    let line = lines[i]
-      .replace('ชื่อและชื่อสกุล', '').replace('ชื่อตัวและชื่อเอก', '')
-      .replace('ชื่อตัว', '').replace('Name', '').replace('Last name', '')
-      .replace('UN', 'นาง').trim();
-    let thai = line.match(/(นาย|นาง|นางสาว)\s+[ก-๙]+\s+[ก-๙]+/);
-    if (thai) { fullname = thai[0]; break; }
-    if (line.includes('บุญยั่ง') || line.includes('โลเปซ')) { fullname = line; break; }
+function stopCamera() {
+  if (currentStream) {
+    currentStream.getTracks().forEach(track => track.stop());
+    currentStream = null;
   }
+  cameraContainer.classList.remove('active');
+  if (!capturedImageBlob) {
+    previewBox.style.display = 'flex';
+    mainButtons.classList.remove('hidden');
+  }
+}
 
-  for (let i = 0; i < lines.length; i++) {
-    let line = lines[i];
-    if (/\d+\/\d+/.test(line) || line.includes('หมู่')) {
-      let addr = [];
-      for (let j = i; j < i + 3; j++) {
-        if (!lines[j]) continue;
-        if (lines[j].includes('2559') || lines[j].includes('Date') || lines[j].includes('วัน')) break;
-        addr.push(lines[j]);
+function toggleCamera() {
+  currentFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment';
+  startCamera();
+}
+
+function captureImage() {
+  if (!currentStream) return;
+  captureCanvas.width = cameraPreview.videoWidth;
+  captureCanvas.height = cameraPreview.videoHeight;
+  const ctx = captureCanvas.getContext('2d');
+  ctx.drawImage(cameraPreview, 0, 0);
+  captureCanvas.toBlob((blob) => {
+    capturedImageBlob = blob;
+    const url = URL.createObjectURL(blob);
+    showPreview(url);
+    cameraContainer.classList.remove('active');
+    captureButtons.classList.remove('hidden');
+    mainButtons.classList.add('hidden');
+    stopCamera();
+  }, 'image/jpeg', 0.9);
+}
+
+function useCapturedImage() {
+  if (capturedImageBlob) handleFile(capturedImageBlob);
+}
+
+function retakePhoto() {
+  capturedImageBlob = null;
+  captureButtons.classList.add('hidden');
+  mainButtons.classList.remove('hidden');
+  hidePreview();
+  startCamera();
+}
+
+function cancelCamera() {
+  capturedImageBlob = null;
+  stopCamera();
+  captureButtons.classList.add('hidden');
+  mainButtons.classList.remove('hidden');
+  hidePreview();
+  setStatus('');
+}
+
+document.getElementById('btnCamera').addEventListener('click', startCamera);
+document.getElementById('btnToggleCamera').addEventListener('click', toggleCamera);
+document.getElementById('btnCapture').addEventListener('click', captureImage);
+document.getElementById('btnCancelCamera').addEventListener('click', cancelCamera);
+document.getElementById('btnRetake').addEventListener('click', retakePhoto);
+document.getElementById('btnUsePhoto').addEventListener('click', useCapturedImage);
+document.getElementById('btnReset').addEventListener('click', cancelCamera);
+
+const PREPROCESS = {
+  enhanceImage(imageFile) {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          const maxDim = 1200;
+          let w = img.width, h = img.height;
+          if (w > maxDim || h > maxDim) {
+            const r = Math.min(maxDim / w, maxDim / h);
+            w = Math.round(w * r); h = Math.round(h * r);
+          }
+          canvas.width = w; canvas.height = h;
+          ctx.drawImage(img, 0, 0, w, h);
+          const imgData = ctx.getImageData(0, 0, w, h);
+          const data = imgData.data;
+          for (let i = 0; i < data.length; i += 4) {
+            const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+            const val = Math.min(255, Math.max(0, ((gray - 128) * 1.4) + 128));
+            data[i] = data[i + 1] = data[i + 2] = val;
+          }
+          ctx.putImageData(imgData, 0, 0);
+          canvas.toBlob(resolve, 'image/jpeg', 0.85);
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(imageFile);
+    });
+  },
+
+  parseThaiID(ocrText) {
+    const lines = ocrText.split('\n').map(l => l.trim()).filter(Boolean);
+    let name = '';
+    let address = '';
+    let isCapturingAddr = false;
+
+    const skipHeader = /Thai National ID Card|บัตรประจำตัวประชาชน|Identification Number/i;
+    const stopAddr = /Date of Issue|วันออกบัตร|ลงชื่อ|Date of Expiry|วันหมดอายุ|วันที่ออก|Signature/i;
+    const dateFmt = /\d{1,2}\s*[ก-ย]\.\s*\d{4}|\d{1,2}\s*[A-Za-z]+\.\s*\d{4}/;
+    const titleNames = /นาย|นางสาว|นาง|น\.s\.?|ด\.ญ\.?|ด\.ช\.?|พระ|สามเณร|Miss|Mrs\.?|Mr\.?|Master/i;
+    const placeNames = /ร้อย|ห้าง|ศูนย์การค้า|เซ็นทรัล|โลตัส|บิ๊กซี|ร้าน/i;
+    const namePrefixes = /ชื่อตัวและชื่อสกุล|ชื่อ-สกุล|Name|ชื่อ|นาม/i;
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      
+      if (skipHeader.test(line)) continue;
+
+      if (!name) {
+        if (titleNames.test(line) && line.length < 80) {
+          name = line.replace(namePrefixes, '').trim();
+        }
+        else if (namePrefixes.test(line)) {
+          if (/[ก-๙a-zA-Z]/.test(line) && !/Thai|National|Card|Identification/i.test(line)) {
+            name = line.replace(namePrefixes, '').trim();
+          }
+        }
       }
-      address = addr.join(' ').replace(/[=~fw)J]/g, '').replace(/\s+/g, ' ').trim();
-      break;
+
+      if (line.includes('ที่อยู่') || line.includes('บ้านเลขที่')) {
+        isCapturingAddr = true;
+        address = line.replace(/ที่อยู่|บ้านเลขที่/gi, '').trim();
+        continue;
+      }
+
+      if (isCapturingAddr) {
+        if (stopAddr.test(line) || dateFmt.test(line)) {
+          isCapturingAddr = false; 
+        } 
+        else if (placeNames.test(line)) {
+          const splitAddr = line.split(/ร้อย|ห้าง|ศูนย์/)[0];
+          if(splitAddr.trim()) address += ' ' + splitAddr.trim();
+          isCapturingAddr = false;
+        }
+        else {
+          if (!/Name:|Last Name:|Date of Birth|Identification/i.test(line)) {
+            address += ' ' + line;
+          }
+        }
+      }
     }
+
+    return {
+      name: name.replace(/\s+/g, ' ').trim(),
+      address: address.replace(/\s+/g, ' ').trim()
+    };
   }
+};
 
-  fullname = fullname.replace(/\bUN\b/g, 'นาง').replace(/\s+/g, ' ').trim();
-  return {
-    fullname: fullname || '',
-    address: address || ''
-  };
+const $ = (id) => document.getElementById(id);
+const statusBox = $('statusBox');
+
+function setStatus(msg, type = 'loading') {
+  statusBox.textContent = msg;
+  statusBox.className = `status ${type}`;
+  if (type === 'loading') {
+    setTimeout(() => { statusBox.className = 'status'; }, 5000);
+  }
 }
 
-/* ─── SHEETS CONFIG ─── */
-function saveConfig() {
-  localStorage.setItem('ocr_sheet_url', document.getElementById('sheetUrl').value);
-  localStorage.setItem('ocr_sheet_name', document.getElementById('sheetName').value);
+function loadSettings() {
+  $('apiKey').value = localStorage.getItem('ocr_api_key') || CONFIG.OCR_API_KEY;
+  $('sheetsUrl').value = localStorage.getItem('sheets_url') || CONFIG.SHEETS_URL;
+  $('sheetName').value = localStorage.getItem('sheet_name') || CONFIG.SHEET_NAME;
 }
-function loadConfig() {
-  document.getElementById('sheetUrl').value = localStorage.getItem('ocr_sheet_url') || '';
-  document.getElementById('sheetName').value = localStorage.getItem('ocr_sheet_name') || 'Sheet1';
-}
+loadSettings();
 
-async function testSheet() {
-  const url = document.getElementById('sheetUrl').value.trim();
-  if (!url) { showSheetStatus('กรุณากรอก URL ก่อน', false); return; }
-  showSheetStatus('กำลังทดสอบ...', null);
+$('btnSettings').onclick = () => $('settingsCard').classList.toggle('active');
+$('btnCloseSettings').onclick = () => {
+  localStorage.setItem('ocr_api_key', $('apiKey').value.trim());
+  localStorage.setItem('sheets_url', $('sheetsUrl').value.trim());
+  localStorage.setItem('sheet_name', $('sheetName').value.trim());
+  $('settingsCard').classList.remove('active');
+  setStatus('✅ บันทึกการตั้งค่าแล้ว', 'success');
+};
+
+$('btnTestConn').onclick = async () => {
+  const key = $('apiKey').value.trim() || CONFIG.OCR_API_KEY;
+  if (!key) return setStatus('❌ กรุณากรอก API Key', 'error');
+  setStatus('🔄 กำลังทดสอบ...', 'loading');
   try {
-    const res = await fetch(url, { method: 'GET', mode: 'no-cors' });
-    showSheetStatus('✅ เชื่อมต่อได้ (no-cors mode) — ลองบันทึกข้อมูลจริงเพื่อยืนยัน', true);
-  } catch (e) {
-    showSheetStatus('❌ เชื่อมต่อไม่ได้: ' + e.message, false);
+    const res = await fetch('https://api.ocr.space/parse/image', {
+      method: 'POST',
+      headers: { 'apikey': key },
+      body: new URLSearchParams({ language: 'tha', OCREngine: '2', url: 'https://ocr.space/Content/Images/demo.jpg' })
+    });
+    const data = await res.json();
+    if (data.OCRExitCode === 1) setStatus('✅ API Key ใช้งานได้', 'success');
+    else setStatus('❌ API Key ไม่ถูกต้อง', 'error');
+  } catch { setStatus('❌ ไม่สามารถเชื่อมต่อได้', 'error'); }
+};
+
+$('galleryInput').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    capturedImageBlob = file;
+    const url = URL.createObjectURL(file);
+    showPreview(url);
+    mainButtons.classList.add('hidden');
+    captureButtons.classList.remove('hidden');
   }
-}
-function showSheetStatus(msg, ok) {
-  const el = document.getElementById('sheetStatus');
-  el.textContent = msg;
-  el.className = 'sheet-status ' + (ok === true ? 'sheet-ok' : ok === false ? 'sheet-err' : '');
-  el.style.display = 'block';
+});
+
+$('btnGallery').onclick = () => $('galleryInput').click();
+
+async function handleFile(file) {
+  if (!file) return;
+  captureButtons.classList.add('hidden');
+  await runOCR(file);
 }
 
-/* ─── SUBMIT ─── */
-async function submitToSheet() {
-  const url = document.getElementById('sheetUrl').value.trim();
+async function runOCR(file) {
+  const key = localStorage.getItem('ocr_api_key') || $('apiKey').value.trim() || CONFIG.OCR_API_KEY;
+  
+  setStatus('🔍 กำลังวิเคราะห์บัตร...', 'loading');
+  try {
+    const enhancedBlob = await PREPROCESS.enhanceImage(file);
+    const formData = new FormData();
+    formData.append('file', enhancedBlob, 'id_card.jpg');
+    formData.append('apikey', key);
+    formData.append('language', 'tha');
+    formData.append('OCREngine', '2');
+    formData.append('scale', 'true');
+    formData.append('detectOrientation', 'true');
+    formData.append('isOverlayRequired', 'false');
+    
+    const res = await fetch('https://api.ocr.space/parse/image', { method: 'POST', body: formData });
+    const data = await res.json();
+    
+    if (data.OCRExitCode !== 1) throw new Error(data.ErrorMessage || 'OCR Failed');
+    
+    const parsed = PREPROCESS.parseThaiID(data.ParsedResults[0].ParsedText);
+    $('fullName').value = parsed.name;
+    $('address').value = parsed.address;
+    $('notes').value = '';
+    $('workerCode').value = '';
+    $('postalCode').value = '';
+    $('phone').value = '';
+    $('quantity').value = 1;
+
+    setStatus('✅ สแกนสำเร็จ', 'success');
+  } catch (err) {
+    setStatus(`❌ ${err.message}`, 'error');
+  }
+}
+
+$('btnSaveSheets').onclick = async () => {
+  const url = localStorage.getItem('sheets_url') || $('sheetsUrl').value.trim() || CONFIG.SHEETS_URL;
+  
+  if (!url) {
+    return setStatus('⚠️ กรุณาตั้งค่า Google Sheets URL', 'error');
+  }
+  
+  setStatus('📤 กำลังบันทึก...', 'loading');
+  
   const payload = {
-    sheet: document.getElementById('sheetName').value || 'Sheet1',
-    fullname: document.getElementById('f_fullname').value,
-    address: document.getElementById('f_address').value,
-    assignee: document.getElementById('f_assignee').value,
-    postcode: document.getElementById('f_postcode').value,
-    phone: document.getElementById('f_phone').value,
-    qty: document.getElementById('f_qty').value,
-    note: document.getElementById('f_note').value,
+    action: 'insert',
+    sheet: localStorage.getItem('sheet_name') || $('sheetName').value.trim() || CONFIG.SHEET_NAME,
+    fullname: $('fullName').value,
+    address: $('address').value,
+    note: $('notes').value,
+    assignee: $('workerCode').value,
+    postcode: $('postalCode').value,
+    phone: $('phone').value,
+    qty: parseInt($('quantity').value) || 1,
+    time: new Date().toISOString(),
+    status: 'pending'
   };
-
-  if (!payload.fullname && !payload.assignee) {
-    toast('กรุณากรอกข้อมูลอย่างน้อย ชื่อหรือผู้รับงาน', 'error'); return;
+  
+  console.log('Sending data:', payload);
+  console.log('To URL:', url);
+  
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      mode: 'no-cors',
+      body: JSON.stringify(payload)
+    });
+    
+    console.log('Response status:', response.status);
+    
+    setStatus('✅ บันทึกสำเร็จ', 'success');
+    addHistory(payload);
+    $('quantity').value = 1; 
+    $('notes').value = '';
+    
+  } catch (error) {
+    console.error('Error:', error);
+    setStatus(`❌ บันทึกไม่สำเร็จ: ${error.message}`, 'error');
   }
+};
 
-  const btn = document.getElementById('submitBtn');
-  document.getElementById('submitIcon').textContent = '';
-  document.getElementById('submitLabel').textContent = 'กำลังบันทึก...';
-  btn.disabled = true;
-  btn.insertAdjacentHTML('afterbegin', '<div class="spinner" style="position:absolute;left:20px"></div>');
-
-  const record = { ...payload, time: new Date().toLocaleString('th-TH'), status: 'pending' };
-
-  if (url) {
-    try {
-      await fetch(url, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      record.status = 'ok';
-      toast('✅ บันทึกลง Google Sheets สำเร็จ!', 'success');
-    } catch (e) {
-      record.status = 'error';
-      toast('❌ บันทึกไม่สำเร็จ: ' + e.message, 'error');
-    }
-  } else {
-    record.status = 'local';
-    toast('💾 บันทึกเฉพาะในเครื่อง (ยังไม่ได้ตั้งค่า Sheet)', 'success');
-  }
-
-  history.unshift(record);
-  localStorage.setItem('ocr_history', JSON.stringify(history.slice(0, 50)));
-  renderHistory();
-
-  btn.querySelector('.spinner')?.remove();
-  document.getElementById('submitIcon').textContent = '📤';
-  document.getElementById('submitLabel').textContent = 'บันทึกลง Google Sheets';
-  btn.disabled = false;
+function addHistory(data) {
+  const list = $('historyList');
+  if (list.querySelector('.history-empty')) list.innerHTML = '';
+  const item = document.createElement('div');
+  item.className = 'history-item';
+  item.innerHTML = `
+    <div>
+      <div class="history-name">${data.fullname || '-'}</div>
+      <div class="history-addr">${(data.address || '').substring(0, 40)}...</div>
+    </div>
+    <div class="history-time">${new Date().toLocaleTimeString('th-TH', {hour: '2-digit', minute: '2-digit'})}</div>
+  `;
+  list.prepend(item);
 }
 
-/* ─── HISTORY ─── */
-function renderHistory() {
-  const el = document.getElementById('historyBody');
-  document.getElementById('historyCount').textContent = history.length;
-  if (!history.length) {
-    el.innerHTML = '<div class="empty-history">ยังไม่มีประวัติการบันทึก</div>'; return;
-  }
-  const rows = history.slice(0, 20).map(r => {
-    const tag = r.status === 'ok' ? '<span class="tag tag-ok">✓ สำเร็จ</span>'
-      : r.status === 'error' ? '<span class="tag tag-err">✗ ผิดพลาด</span>'
-      : r.status === 'local' ? '<span class="tag tag-pen">💾 ในเครื่อง</span>'
-      : '<span class="tag tag-pen">⏳ รอ</span>';
-    return `<tr>
-      <td style="color:var(--muted);font-size:12px">${r.time}</td>
-      <td>${r.fullname || '—'}</td>
-      <td>${r.assignee || '—'}</td>
-      <td style="text-align:center">${r.qty || '1'}</td>
-      <td>${r.phone || '—'}</td>
-      <td>${tag}</td>
-    </tr>`;
-  }).join('');
-  el.innerHTML = `<table class="history-table">
-    <thead><tr>
-      <th>เวลา</th><th>ชื่อ</th><th>ผู้รับงาน</th><th>จำนวน</th><th>เบอร์โทร</th><th>สถานะ</th>
-    </tr></thead>
-    <tbody>${rows}</tbody>
-  </table>`;
-}
-function clearHistory() {
-  if (!confirm('ลบประวัติทั้งหมด?')) return;
-  history = [];
-  localStorage.removeItem('ocr_history');
-  renderHistory();
-}
+$('btnClearHistory').onclick = () => {
+  $('historyList').innerHTML = '<div class="history-empty">ยังไม่มีประวัติการบันทึก</div>';
+};
 
-/* ─── TOAST ─── */
-function toast(msg, type = 'success') {
-  const el = document.getElementById('toast');
-  const icon = type === 'success' ? '✅' : '❌';
-  el.innerHTML = `<span>${icon}</span><span>${msg}</span>`;
-  el.className = `toast ${type} show`;
-  setTimeout(() => el.classList.remove('show'), 3200);
-}
-
-/* ─── HELP ─── */
-function showHelp() {
-  document.getElementById('helpOverlay').style.display = 'flex';
-}
-function copyGas() {
-  navigator.clipboard.writeText(GAS_CODE).then(() => toast('คัดลอกโค้ดแล้ว!', 'success'));
-}
+window.addEventListener('beforeunload', () => {
+  if (currentStream) currentStream.getTracks().forEach(track => track.stop());
+});
 </script>
 </body>
 </html>
