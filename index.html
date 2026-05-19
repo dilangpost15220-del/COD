@@ -3,23 +3,23 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>สแกนบัตรประชาชนจอง PC บอลโลก 2026/title>
+<title>สแกนบัตรประชาชนจอง PC บอลโลก 2026</title>
 <style>
   :root {
-    --primary: #4F46E5;
-    --primary-light: #818CF8;
-    --primary-dark: #3730A3;
-    --bg: #F1F5F9;
+    --primary: #DC2626;
+    --primary-light: #EF4444;
+    --primary-dark: #991B1B;
+    --bg: #FFFFFF;
     --card: #FFFFFF;
-    --text: #1E293B;
-    --text-muted: #64748B;
-    --border: #E2E8F0;
+    --text: #111827;
+    --text-muted: #6B7280;
+    --border: #E5E7EB;
     --success: #10B981;
-    --error: #EF4444;
+    --error: #DC2626;
     --warning: #F59E0B;
     --radius: 16px;
-    --shadow: 0 4px 24px rgba(0,0,0,0.08);
-    --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
+    --shadow: 0 4px 24px rgba(220, 38, 38, 0.12);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
   body { background: var(--bg); color: var(--text); padding: 0; max-width: 100%; min-height: 100vh; }
@@ -29,10 +29,10 @@
   .header {
     background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
     color: white;
-    padding: 20px 16px 24px;
+    padding: 24px 16px 28px;
     text-align: center;
-    border-radius: 0 0 24px 24px;
-    box-shadow: 0 4px 20px rgba(79,70,229,0.3);
+    border-radius: 0 0 28px 28px;
+    box-shadow: 0 4px 20px rgba(220, 38, 38, 0.3);
     position: relative;
     overflow: hidden;
   }
@@ -43,15 +43,15 @@
     left: -50%;
     width: 200%;
     height: 200%;
-    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
     animation: pulse 4s ease-in-out infinite;
   }
   @keyframes pulse {
     0%, 100% { transform: scale(1); }
     50% { transform: scale(1.1); }
   }
-  .header h1 { font-size: 1.4rem; font-weight: 700; margin-bottom: 4px; position: relative; }
-  .header p { font-size: 0.8rem; opacity: 0.9; position: relative; }
+  .header h1 { font-size: 1.5rem; font-weight: 800; margin-bottom: 6px; position: relative; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+  .header p { font-size: 0.85rem; opacity: 0.95; position: relative; font-weight: 500; }
   
   .card {
     background: var(--card);
@@ -59,6 +59,7 @@
     padding: 16px;
     box-shadow: var(--shadow-sm);
     margin: 12px 12px;
+    border: 1px solid var(--border);
   }
   
   .camera-container {
@@ -69,6 +70,7 @@
     overflow: hidden;
     position: relative;
     display: none;
+    border: 2px solid var(--primary);
   }
   .camera-container.active { display: block; }
   #cameraPreview { width: 100%; height: 100%; object-fit: cover; }
@@ -77,51 +79,53 @@
     top: 50%; left: 50%;
     transform: translate(-50%, -50%);
     width: 85%; height: 55%;
-    border: 2px solid rgba(255,255,255,0.8);
+    border: 3px solid rgba(255,255,255,0.9);
     border-radius: 12px;
     pointer-events: none;
-    box-shadow: 0 0 0 9999px rgba(0,0,0,0.5);
+    box-shadow: 0 0 0 9999px rgba(0,0,0,0.6);
   }
   .camera-overlay::before {
     content: '🪪 วางบัตรให้อยู่ในกรอบ';
     position: absolute;
-    top: -28px; left: 0; right: 0;
+    top: -32px; left: 0; right: 0;
     text-align: center;
     color: white;
-    font-size: 0.8rem;
-    font-weight: 500;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
   }
   .camera-overlay::after {
     content: 'ถือนิ่งๆ แล้วกดถ่ายกล้องหลัง';
     position: absolute;
     bottom: -28px; left: 0; right: 0;
     text-align: center;
-    color: rgba(255,255,255,0.8);
+    color: rgba(255,255,255,0.9);
     font-size: 0.75rem;
   }
   .camera-controls {
     position: absolute; bottom: 0; left: 0; right: 0;
     padding: 16px;
-    background: linear-gradient(transparent, rgba(0,0,0,0.8));
+    background: linear-gradient(transparent, rgba(0,0,0,0.9));
     display: flex; gap: 8px; justify-content: center;
   }
   .camera-toggle {
     position: absolute; top: 12px; right: 12px;
-    background: rgba(255,255,255,0.9);
-    border: none; border-radius: 50%;
-    width: 40px; height: 40px;
+    background: rgba(255,255,255,0.95);
+    border: 2px solid var(--primary);
+    border-radius: 50%;
+    width: 42px; height: 42px;
     cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     font-size: 1.1rem;
     z-index: 10;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
   }
   
   .preview-box {
     width: 100%;
     aspect-ratio: 16/9;
-    background: #F8FAFC;
-    border: 2px dashed var(--border);
+    background: #F9FAFB;
+    border: 2px dashed var(--primary);
     border-radius: var(--radius);
     display: flex;
     align-items: center;
@@ -142,7 +146,7 @@
     padding: 20px;
   }
   .preview-box .placeholder.hidden { display: none; }
-  .preview-box .placeholder-icon { font-size: 2.5rem; margin-bottom: 8px; }
+  .preview-box .placeholder-icon { font-size: 3rem; margin-bottom: 10px; }
   .preview-box .placeholder-text { font-size: 0.85rem; }
   
   .btn-row { display: flex; gap: 8px; margin-top: 12px; }
@@ -151,7 +155,7 @@
     padding: 14px 16px;
     border: none;
     border-radius: 12px;
-    font-weight: 600;
+    font-weight: 700;
     font-size: 0.9rem;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -164,77 +168,82 @@
   .btn-primary {
     background: var(--primary);
     color: white;
-    box-shadow: 0 4px 12px rgba(79,70,229,0.3);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
   }
-  .btn-secondary { background: #F1F5F9; color: var(--text); }
-  .btn-danger { background: #FEE2E2; color: var(--error); }
+  .btn-secondary { background: #111827; color: white; border: 2px solid #374151; }
+  .btn-danger { background: #FEE2E2; color: var(--primary); border: 2px solid var(--primary-light); }
   .btn-success {
-    background: var(--success);
+    background: #111827;
     color: white;
-    box-shadow: 0 4px 12px rgba(16,185,129,0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   }
-  .btn-warning { background: #FEF3C7; color: #92400E; }
+  .btn-warning { background: #FEF3C7; color: #92400E; border: 2px solid #F59E0B; }
   .btn-large { padding: 16px; font-size: 1rem; }
   .btn-icon { flex: 0 0 auto; width: 44px; height: 44px; padding: 0; }
   
   .status {
     margin: 8px 12px;
-    padding: 10px 16px;
+    padding: 12px 16px;
     border-radius: 10px;
     font-size: 0.85rem;
-    font-weight: 500;
+    font-weight: 600;
     display: none;
     align-items: center;
     gap: 8px;
     animation: slideIn 0.3s ease;
+    border: 2px solid transparent;
   }
   @keyframes slideIn {
     from { opacity: 0; transform: translateY(-10px); }
     to { opacity: 1; transform: translateY(0); }
   }
-  .status.loading { display: flex; background: #FEF3C7; color: #92400E; }
-  .status.success { display: flex; background: #D1FAE5; color: #065F46; }
-  .status.error { display: flex; background: #FEE2E2; color: #991B1B; }
+  .status.loading { display: flex; background: #FEF3C7; color: #92400E; border-color: #F59E0B; }
+  .status.success { display: flex; background: #D1FAE5; color: #065F46; border-color: var(--success); }
+  .status.error { display: flex; background: #FEE2E2; color: #991B1B; border-color: var(--primary); }
   
   .section-title {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--primary);
   }
   .section-title h3 {
-    font-size: 1rem;
-    font-weight: 700;
+    font-size: 1.05rem;
+    font-weight: 800;
     display: flex;
     align-items: center;
     gap: 6px;
+    color: var(--primary);
   }
   .section-title span {
     font-size: 0.75rem;
     color: var(--text-muted);
-    font-weight: 400;
+    font-weight: 500;
   }
   .form-group { margin-bottom: 12px; }
   .form-group label {
     display: block;
     font-size: 0.8rem;
-    color: var(--text-muted);
+    color: var(--text);
     margin-bottom: 6px;
-    font-weight: 500;
+    font-weight: 700;
   }
   .form-group input, .form-group textarea {
     width: 100%;
     padding: 12px 14px;
-    border: 1.5px solid var(--border);
+    border: 2px solid var(--border);
     border-radius: 10px;
     font-size: 0.95rem;
     transition: all 0.2s ease;
-    background: #F8FAFC;
+    background: white;
+    font-weight: 500;
   }
   .form-group input:focus, .form-group textarea:focus {
     outline: none;
-    border-color: var(--primary-light);
-    box-shadow: 0 0 0 3px rgba(79,70,229,0.1);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
     background: white;
   }
   .form-group textarea { min-height: 70px; resize: vertical; }
@@ -244,41 +253,44 @@
   .settings-card { display: none; }
   .settings-card.active { display: block; }
   .settings-tip {
-    background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);
+    background: linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%);
     padding: 12px;
     border-radius: 10px;
     font-size: 0.8rem;
-    color: #1E40AF;
+    color: #991B1B;
     margin-bottom: 12px;
     line-height: 1.5;
+    border: 2px solid var(--primary-light);
+    font-weight: 600;
   }
-  .settings-tip a { color: var(--primary); font-weight: 600; }
+  .settings-tip a { color: var(--primary); font-weight: 700; }
   
   .history-list { max-height: 200px; overflow-y: auto; }
   .history-item {
     padding: 12px;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 2px solid var(--border);
     display: flex;
     justify-content: space-between;
     align-items: center;
   }
   .history-item:last-child { border-bottom: none; }
-  .history-name { font-weight: 600; font-size: 0.9rem; }
+  .history-name { font-weight: 700; font-size: 0.9rem; color: var(--primary); }
   .history-addr { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
-  .history-time { font-size: 0.7rem; color: var(--text-muted); white-space: nowrap; }
+  .history-time { font-size: 0.7rem; color: var(--text-muted); white-space: nowrap; font-weight: 600; }
   .history-empty {
     color: var(--text-muted);
     text-align: center;
     padding: 24px;
     font-size: 0.85rem;
+    font-weight: 600;
   }
   
   .bottom-bar {
     position: fixed;
     bottom: 0; left: 0; right: 0;
-    background: white;
+    background: #111827;
     padding: 12px;
-    box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+    box-shadow: 0 -4px 20px rgba(220, 38, 38, 0.3);
     display: flex;
     gap: 8px;
     z-index: 100;
@@ -291,16 +303,15 @@
   
   ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 4px; }
 </style>
-<base target="_blank">
 </head>
 <body>
 
 <div class="app-container">
   <div class="header">
-    <h1>🪪 ระบบจัดการไปรษณียบัตรฟุตบอลโลก 2026</h1>
-    <p>สแกนบัตรประชาชนด้วย AI OCR</p>
+    <h1>🪪 สแกนบัตรประชาชนจอง PC บอลโลก 2026</h1>
+    <p>ระบบสแกนบัตรประชาชนด้วย AI OCR</p>
   </div>
 
   <div class="card" style="margin-top: -12px; position: relative; z-index: 1;">
@@ -378,7 +389,7 @@
     </div>
   </div>
 
-  <div class="card" id="settingsCard" style="display:none;">
+  <div class="card" id="settingsCard" class="settings-card">
     <div class="section-title">
       <h3>⚙️ ตั้งค่าระบบ</h3>
     </div>
@@ -395,7 +406,7 @@
     </div>
     <div class="form-group">
       <label>Sheet Name</label>
-      <input type="text" id="sheetName" value="ชื่อ1">
+      <input type="text" id="sheetName" value="Data">
     </div>
     <div class="btn-row">
       <button class="btn btn-secondary" id="btnTestConn">🔗 ทดสอบ</button>
@@ -424,8 +435,8 @@
 <script>
 const CONFIG = {
   OCR_API_KEY: 'K89547989888957',
-  SHEETS_URL: 'https://script.google.com/macros/s/AKfycbxruEkA-0NyO-w0Mcr8hnrWMplVOpOIZeO6DISCABwhLi-YcwuT8OOFcpKIToXAH5EVaQ/exec',
-  SHEET_NAME: 'ชื่อ1'
+  SHEETS_URL: 'https://script.google.com/macros/s/AKfycbz--nqIv3WPRVJ_2_92zWmP7cSzeiZMNoibdZ7eb-5RKAkDHcJwX0YvPVwEEmz8HzGtSA/exec',
+  SHEET_NAME: 'Data'
 };
 
 let currentStream = null;
@@ -644,25 +655,12 @@ function loadSettings() {
 }
 loadSettings();
 
-let secretTapCount = 0;
-let secretTapTimer = null;
-$('btnSettings').onclick = () => {
-  secretTapCount++;
-  clearTimeout(secretTapTimer);
-  secretTapTimer = setTimeout(() => { secretTapCount = 0; }, 1500);
-  if (secretTapCount >= 5) {
-    secretTapCount = 0;
-    const card = $('settingsCard');
-    const isVisible = card.style.display !== 'none';
-    card.style.display = isVisible ? 'none' : 'block';
-    if (!isVisible) card.scrollIntoView({ behavior: 'smooth' });
-  }
-};
+$('btnSettings').onclick = () => $('settingsCard').classList.toggle('active');
 $('btnCloseSettings').onclick = () => {
   localStorage.setItem('ocr_api_key', $('apiKey').value.trim());
   localStorage.setItem('sheets_url', $('sheetsUrl').value.trim());
   localStorage.setItem('sheet_name', $('sheetName').value.trim());
-  $('settingsCard').style.display = 'none';
+  $('settingsCard').classList.remove('active');
   setStatus('✅ บันทึกการตั้งค่าแล้ว', 'success');
 };
 
@@ -755,7 +753,7 @@ $('btnSaveSheets').onclick = async () => {
     postcode: $('postalCode').value,
     phone: $('phone').value,
     qty: parseInt($('quantity').value) || 1,
-    time: (() => { const d = new Date(); const pad = n => String(n).padStart(2,'0'); return pad(d.getDate()) + '/' + pad(d.getMonth()+1) + '/' + d.getFullYear() + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()); })(),
+    time: new Date().toISOString(),
     status: 'pending'
   };
   
