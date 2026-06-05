@@ -63,7 +63,7 @@
   
   .camera-container {
     width: 100%;
-    aspect-ratio: 4/3;
+    aspect-ratio: 16/10; /* แก้ไข: จาก 4/3 เป็น 16/10 */
     background: #000;
     border-radius: var(--radius);
     overflow: hidden;
@@ -76,7 +76,9 @@
     position: absolute;
     top: 50%; left: 50%;
     transform: translate(-50%, -50%);
-    width: 85%; height: 55%;
+    width: 88%;           /* แก้ไข: จาก 85% เป็น 88% */
+    height: auto;         /* แก้ไข: จาก 55% เป็น auto */
+    aspect-ratio: 1.586 / 1; /* แก้ไข: เพิ่ม aspect-ratio ตรงกับบัตรจริง 85.6x54mm */
     border: 2px solid rgba(255,255,255,0.8);
     border-radius: 12px;
     pointer-events: none;
@@ -85,7 +87,7 @@
   .camera-overlay::before {
     content: '🪪 วางบัตรให้อยู่ในกรอบ';
     position: absolute;
-    top: -28px; left: 0; right: 0;
+    top: -32px; left: 0; right: 0; /* แก้ไข: จาก -28px เป็น -32px */
     text-align: center;
     color: white;
     font-size: 0.8rem;
@@ -117,10 +119,8 @@
     box-shadow: 0 2px 8px rgba(0,0,0,0.2);
   }
   
-  /* 🔧 แก้ไขส่วน Preview ให้พอดีรูปบัตรอัตโนมัติ */
   .preview-box {
     width: 100%;
-    /* ลบ aspect-ratio: 16/9 ออก เพื่อให้กล่องปรับตามรูปจริง */
     background: #FFFFFF;
     border: 2px dashed var(--border);
     border-radius: var(--radius);
@@ -251,7 +251,6 @@
   .form-row { display: flex; gap: 8px; }
   .form-row .form-group { flex: 1; }
   
-  /* ⚙️ ซ่อนการตั้งค่าเริ่มต้น */
   .settings-card { display: none; }
   .settings-card.active { display: block; }
   .settings-tip {
@@ -388,7 +387,6 @@
     </div>
   </div>
 
-  <!-- ⚙️ การตั้งค่า (ซ่อนเริ่มต้น) -->
   <div class="card settings-card" id="settingsCard">
     <div class="section-title">
       <h3>⚙️ ตั้งค่าระบบ</h3>
@@ -521,7 +519,7 @@ function captureImage() {
     cameraContainer.classList.remove('active');
     captureButtons.classList.remove('hidden');
     mainButtons.classList.add('hidden');
-    previewBox.style.display = 'flex'; // 🔧 ใช้ flex เพื่อให้จัดกึ่งกลาง & ปรับขนาดอัตโนมัติ
+    previewBox.style.display = 'flex';
     stopCamera();
   }, 'image/jpeg', 0.9);
 }
@@ -667,7 +665,6 @@ function loadSettings() {
 }
 loadSettings();
 
-// ️ Toggle Settings
 $('btnSettings').onclick = () => {
   $('settingsCard').classList.toggle('active');
   if ($('settingsCard').classList.contains('active')) {
@@ -777,20 +774,13 @@ $('btnSaveSheets').onclick = async () => {
     status: 'pending'
   };
   
-  console.log('Sending data:', payload);
-  console.log('To URL:', url);
-  
   try {
-    const response = await fetch(url, {
+    await fetch(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       mode: 'no-cors',
       body: JSON.stringify(payload)
     });
-    
-    console.log('Response status:', response.status);
     
     setStatus('✅ บันทึกสำเร็จ', 'success');
     addHistory(payload);
@@ -798,7 +788,6 @@ $('btnSaveSheets').onclick = async () => {
     $('notes').value = '';
     
   } catch (error) {
-    console.error('Error:', error);
     setStatus(`❌ บันทึกไม่สำเร็จ: ${error.message}`, 'error');
   }
 };
