@@ -18,14 +18,12 @@
     --error: #DC2626;
     --warning: #F59E0B;
     --radius: 16px;
-    --shadow: 0 4px 24px rgba(0,0,0,0.08);
     --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
   body { background: var(--bg); color: var(--text); padding: 0; max-width: 100%; min-height: 100vh; }
-  
   .app-container { max-width: 480px; margin: 0 auto; padding-bottom: 20px; }
-  
+
   .header {
     background: linear-gradient(135deg, #000000 0%, #DC2626 100%);
     color: white;
@@ -38,21 +36,15 @@
   }
   .header::before {
     content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
+    position: absolute; top: -50%; left: -50%;
+    width: 200%; height: 200%;
     background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
     animation: pulse 4s ease-in-out infinite;
   }
-  @keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-  }
+  @keyframes pulse { 0%,100%{transform:scale(1)}50%{transform:scale(1.1)} }
   .header h1 { font-size: 1.3rem; font-weight: 700; margin-bottom: 4px; position: relative; line-height: 1.4; }
   .header p { font-size: 0.8rem; opacity: 0.9; position: relative; }
-  
+
   .card {
     background: var(--card);
     border-radius: var(--radius);
@@ -60,68 +52,81 @@
     box-shadow: var(--shadow-sm);
     margin: 12px 12px;
   }
-  
-  .camera-container {
+
+  /* ========== CAMERA ========== */
+  .camera-wrapper {
     width: 100%;
-    aspect-ratio: 16/10; /* แก้ไข: จาก 4/3 เป็น 16/10 */
+    position: relative;
     background: #000;
     border-radius: var(--radius);
     overflow: hidden;
-    position: relative;
     display: none;
   }
-  .camera-container.active { display: block; }
-  #cameraPreview { width: 100%; height: 100%; object-fit: cover; }
-  .camera-overlay {
+  .camera-wrapper.active { display: block; }
+
+  #cameraPreview {
+    width: 100%;
+    display: block;
+    /* ไม่กำหนด height — ให้กล้องแสดง aspect-ratio จริงของอุปกรณ์ */
+  }
+
+  /* กรอบเล็งบัตร — วาด overlay ทับวิดีโอ */
+  .card-frame-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  /* เส้นกรอบสีขาว อัตราส่วน 1.586:1 (บัตร 85.6×54mm) */
+  .card-frame-box {
     position: absolute;
     top: 50%; left: 50%;
     transform: translate(-50%, -50%);
-    width: 88%;           /* แก้ไข: จาก 85% เป็น 88% */
-    height: auto;         /* แก้ไข: จาก 55% เป็น auto */
-    aspect-ratio: 1.586 / 1; /* แก้ไข: เพิ่ม aspect-ratio ตรงกับบัตรจริง 85.6x54mm */
-    border: 2px solid rgba(255,255,255,0.8);
-    border-radius: 12px;
-    pointer-events: none;
-    box-shadow: 0 0 0 9999px rgba(0,0,0,0.5);
+    width: 88%;
+    aspect-ratio: 1.586 / 1;
+    border: 2.5px solid rgba(255,255,255,0.9);
+    border-radius: 10px;
+    box-shadow: 0 0 0 9999px rgba(0,0,0,0.52);
   }
-  .camera-overlay::before {
-    content: '🪪 วางบัตรให้อยู่ในกรอบ';
+  .card-frame-box::before {
+    content: '🪪  วางบัตรให้อยู่ในกรอบ';
     position: absolute;
-    top: -32px; left: 0; right: 0; /* แก้ไข: จาก -28px เป็น -32px */
+    top: -30px; left: 0; right: 0;
     text-align: center;
-    color: white;
+    color: #fff;
     font-size: 0.8rem;
-    font-weight: 500;
+    font-weight: 600;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.8);
   }
-  .camera-overlay::after {
-    content: 'ถือนิ่งๆ แล้วกดถ่ายกล้องหลัง';
+  .card-frame-box::after {
+    content: 'ถือนิ่งๆ แล้วกดถ่าย';
     position: absolute;
-    bottom: -28px; left: 0; right: 0;
+    bottom: -26px; left: 0; right: 0;
     text-align: center;
-    color: rgba(255,255,255,0.8);
+    color: rgba(255,255,255,0.85);
     font-size: 0.75rem;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.8);
   }
-  .camera-controls {
-    position: absolute; bottom: 0; left: 0; right: 0;
-    padding: 16px;
-    background: linear-gradient(transparent, rgba(0,0,0,0.8));
-    display: flex; gap: 8px; justify-content: center;
-  }
+
   .camera-toggle {
     position: absolute; top: 12px; right: 12px;
     background: rgba(255,255,255,0.9);
     border: none; border-radius: 50%;
     width: 40px; height: 40px;
-    cursor: pointer;
+    cursor: pointer; font-size: 1.1rem; z-index: 10;
     display: flex; align-items: center; justify-content: center;
-    font-size: 1.1rem;
-    z-index: 10;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
   }
-  
+  .camera-controls {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 16px;
+    background: linear-gradient(transparent, rgba(0,0,0,0.75));
+    display: flex; gap: 8px; justify-content: center;
+  }
+
+  /* ========== PREVIEW ========== */
   .preview-box {
     width: 100%;
-    background: #FFFFFF;
+    background: #fff;
     border: 2px dashed var(--border);
     border-radius: var(--radius);
     display: flex;
@@ -130,177 +135,105 @@
     overflow: hidden;
     position: relative;
     padding: 12px;
-    min-height: 200px;
-    transition: all 0.3s ease;
+    min-height: 180px;
   }
   .preview-box img {
     max-width: 100%;
-    max-height: 500px;
-    width: auto;
-    height: auto;
+    max-height: 460px;
+    width: auto; height: auto;
     object-fit: contain;
     display: none;
     border-radius: 8px;
   }
-  .preview-box img.active { 
-    display: block !important; 
-  }
-  .preview-box .placeholder {
-    color: var(--text-muted);
-    text-align: center;
-    padding: 20px;
-  }
+  .preview-box img.active { display: block !important; }
+  .preview-box .placeholder { color: var(--text-muted); text-align: center; padding: 20px; }
   .preview-box .placeholder.hidden { display: none !important; }
-  .preview-box .placeholder-icon { font-size: 2.5rem; margin-bottom: 8px; }
-  .preview-box .placeholder-text { font-size: 0.85rem; }
-  
+  .placeholder-icon { font-size: 2.5rem; margin-bottom: 8px; }
+  .placeholder-text { font-size: 0.85rem; }
+
+  /* ========== BUTTONS ========== */
   .btn-row { display: flex; gap: 8px; margin-top: 12px; }
   .btn {
-    flex: 1;
-    padding: 14px 16px;
-    border: none;
-    border-radius: 12px;
-    font-weight: 600;
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
+    flex: 1; padding: 14px 16px; border: none; border-radius: 12px;
+    font-weight: 600; font-size: 0.9rem; cursor: pointer;
+    transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px;
   }
   .btn:active { transform: scale(0.97); }
-  .btn-primary {
-    background: var(--primary);
-    color: white;
-    box-shadow: 0 4px 12px rgba(220,38,38,0.3);
-  }
+  .btn-primary { background: var(--primary); color: #fff; box-shadow: 0 4px 12px rgba(220,38,38,0.3); }
   .btn-primary:hover { background: var(--primary-dark); }
   .btn-secondary { background: #F3F4F6; color: var(--text); border: 1px solid var(--border); }
   .btn-danger { background: #FEE2E2; color: var(--error); }
-  .btn-success {
-    background: var(--success);
-    color: white;
-    box-shadow: 0 4px 12px rgba(16,185,129,0.3);
-  }
+  .btn-success { background: var(--success); color: #fff; box-shadow: 0 4px 12px rgba(16,185,129,0.3); }
   .btn-warning { background: #FEF3C7; color: #92400E; }
   .btn-large { padding: 16px; font-size: 1rem; }
   .btn-icon { flex: 0 0 auto; width: 44px; height: 44px; padding: 0; }
-  
+
+  /* ========== STATUS ========== */
   .status {
-    margin: 8px 12px;
-    padding: 10px 16px;
-    border-radius: 10px;
-    font-size: 0.85rem;
-    font-weight: 500;
-    display: none;
-    align-items: center;
-    gap: 8px;
+    margin: 8px 12px; padding: 10px 16px; border-radius: 10px;
+    font-size: 0.85rem; font-weight: 500;
+    display: none; align-items: center; gap: 8px;
     animation: slideIn 0.3s ease;
   }
-  @keyframes slideIn {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
+  @keyframes slideIn { from{opacity:0;transform:translateY(-10px)} to{opacity:1;transform:translateY(0)} }
   .status.loading { display: flex; background: #FEF3C7; color: #92400E; }
   .status.success { display: flex; background: #D1FAE5; color: #065F46; }
-  .status.error { display: flex; background: #FEE2E2; color: #991B1B; }
-  
-  .section-title {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
-  }
-  .section-title h3 {
-    font-size: 1rem;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .section-title span {
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    font-weight: 400;
-  }
+  .status.error   { display: flex; background: #FEE2E2; color: #991B1B; }
+
+  /* ========== FORM ========== */
+  .section-title { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .section-title h3 { font-size: 1rem; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+  .section-title span { font-size: 0.75rem; color: var(--text-muted); font-weight: 400; }
   .form-group { margin-bottom: 12px; }
-  .form-group label {
-    display: block;
-    font-size: 0.8rem;
-    color: var(--text-muted);
-    margin-bottom: 6px;
-    font-weight: 500;
-  }
+  .form-group label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 6px; font-weight: 500; }
   .form-group input, .form-group textarea {
-    width: 100%;
-    padding: 12px 14px;
-    border: 1.5px solid var(--border);
-    border-radius: 10px;
-    font-size: 0.95rem;
-    transition: all 0.2s ease;
-    background: #F9FAFB;
+    width: 100%; padding: 12px 14px;
+    border: 1.5px solid var(--border); border-radius: 10px;
+    font-size: 0.95rem; transition: all 0.2s; background: #F9FAFB;
   }
   .form-group input:focus, .form-group textarea:focus {
-    outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(220,38,38,0.1);
-    background: white;
+    outline: none; border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(220,38,38,0.1); background: #fff;
   }
   .form-group textarea { min-height: 70px; resize: vertical; }
   .form-row { display: flex; gap: 8px; }
   .form-row .form-group { flex: 1; }
-  
+
+  /* ========== SETTINGS ========== */
   .settings-card { display: none; }
   .settings-card.active { display: block; }
   .settings-tip {
-    background: linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%);
-    padding: 12px;
-    border-radius: 10px;
-    font-size: 0.8rem;
-    color: var(--primary-dark);
-    margin-bottom: 12px;
-    line-height: 1.5;
+    background: linear-gradient(135deg, #FEF2F2, #FEE2E2);
+    padding: 12px; border-radius: 10px;
+    font-size: 0.8rem; color: var(--primary-dark);
+    margin-bottom: 12px; line-height: 1.5;
   }
-  .settings-tip a { color: var(--primary); font-weight: 600; }
-  
+
+  /* ========== HISTORY ========== */
   .history-list { max-height: 200px; overflow-y: auto; }
   .history-item {
-    padding: 12px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    padding: 12px; border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
   }
   .history-item:last-child { border-bottom: none; }
   .history-name { font-weight: 600; font-size: 0.9rem; }
   .history-addr { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
   .history-time { font-size: 0.7rem; color: var(--text-muted); white-space: nowrap; }
-  .history-empty {
-    color: var(--text-muted);
-    text-align: center;
-    padding: 24px;
-    font-size: 0.85rem;
-  }
-  
+  .history-empty { color: var(--text-muted); text-align: center; padding: 24px; font-size: 0.85rem; }
+
+  /* ========== BOTTOM BAR ========== */
   .bottom-bar {
-    position: fixed;
-    bottom: 0; left: 0; right: 0;
-    background: white;
-    padding: 12px;
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: #fff; padding: 12px;
     box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
-    display: flex;
-    gap: 8px;
-    z-index: 100;
+    display: flex; gap: 8px; z-index: 100;
   }
   .bottom-bar .btn { padding: 14px; }
   .spacer { height: 80px; }
-  
+
   .hidden { display: none !important; }
   input[type="file"] { display: none; }
-  
   ::-webkit-scrollbar { width: 4px; }
-  ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 </style>
 </head>
@@ -312,34 +245,42 @@
     <p>สแกนบัตรประชาชนด้วย AI OCR</p>
   </div>
 
-  <div class="card" style="margin-top: -12px; position: relative; z-index: 1;">
-    <div class="camera-container" id="cameraContainer">
+  <div class="card" style="margin-top:-12px;position:relative;z-index:1;">
+
+    <!-- กล้อง -->
+    <div class="camera-wrapper" id="cameraWrapper">
       <video id="cameraPreview" autoplay playsinline></video>
       <canvas id="captureCanvas" style="display:none;"></canvas>
-      <div class="camera-overlay"></div>
-      <button class="camera-toggle" id="btnToggleCamera">🔄</button>
+      <!-- overlay กรอบเล็งบัตร -->
+      <div class="card-frame-overlay">
+        <div class="card-frame-box" id="cardFrameBox"></div>
+      </div>
+      <button class="camera-toggle" id="btnToggleCamera" title="สลับกล้อง">🔄</button>
       <div class="camera-controls">
-        <button class="btn btn-success" id="btnCapture" style="flex: 0 0 130px;"> ถ่ายภาพ</button>
-        <button class="btn btn-danger" id="btnCancelCamera" style="flex: 0 0 80px;">✕ ยกเลิก</button>
+        <button class="btn btn-success" id="btnCapture" style="flex:0 0 130px;">📸 ถ่ายภาพ</button>
+        <button class="btn btn-danger"  id="btnCancelCamera" style="flex:0 0 80px;">✕ ยกเลิก</button>
       </div>
     </div>
 
+    <!-- Preview -->
     <div class="preview-box" id="previewBox">
       <div class="placeholder" id="previewPlaceholder">
         <div class="placeholder-icon">🪪</div>
-        <div class="placeholder-text">แตะเพื่อเปิดกล้อง หรือใช้ปุ่มด้านล่าง</div>
+        <div class="placeholder-text">แตะปุ่มด้านล่างเพื่อเปิดกล้อง</div>
       </div>
-      <img id="previewImg">
+      <img id="previewImg" alt="ภาพบัตร">
     </div>
 
+    <!-- ปุ่มหลัก -->
     <div class="btn-row" id="mainButtons">
       <button class="btn btn-primary" id="btnCamera">📷 สแกนบัตรประชาชน</button>
       <button class="btn btn-secondary btn-icon" id="btnGallery">🖼</button>
     </div>
 
+    <!-- ปุ่มหลังถ่าย -->
     <div class="btn-row hidden" id="captureButtons">
       <button class="btn btn-warning" id="btnRetake">🔄 ถ่ายใหม่</button>
-      <button class="btn btn-success" id="btnUsePhoto">✅ ใช้ภาพนี้</button>
+      <button class="btn btn-success"  id="btnUsePhoto">✅ ใช้ภาพนี้</button>
       <button class="btn btn-danger btn-icon" id="btnReset">✕</button>
     </div>
 
@@ -348,6 +289,7 @@
 
   <div id="statusBox" class="status"></div>
 
+  <!-- ฟอร์มข้อมูล -->
   <div class="card">
     <div class="section-title">
       <h3>📋 ข้อมูลบัตร</h3>
@@ -387,19 +329,16 @@
     </div>
   </div>
 
+  <!-- ตั้งค่า -->
   <div class="card settings-card" id="settingsCard">
-    <div class="section-title">
-      <h3>⚙️ ตั้งค่าระบบ</h3>
-    </div>
-    <div class="settings-tip">
-      ✅ API Key และ URL ถูกตั้งค่าไว้แล้วในโค้ด
-    </div>
+    <div class="section-title"><h3>⚙️ ตั้งค่าระบบ</h3></div>
+    <div class="settings-tip">✅ API Key และ URL ถูกตั้งค่าไว้แล้วในโค้ด</div>
     <div class="form-group">
-      <label> OCR.space API Key</label>
+      <label>OCR.space API Key</label>
       <input type="text" id="apiKey" placeholder="วาง API Key ที่นี่">
     </div>
     <div class="form-group">
-      <label> Google Sheets URL</label>
+      <label>Google Sheets URL</label>
       <input type="text" id="sheetsUrl" placeholder="https://script.google.com/macros/s/...">
     </div>
     <div class="form-group">
@@ -408,14 +347,15 @@
     </div>
     <div class="btn-row">
       <button class="btn btn-secondary" id="btnTestConn">🔗 ทดสอบ</button>
-      <button class="btn btn-primary" id="btnCloseSettings"> บันทึก</button>
+      <button class="btn btn-primary"   id="btnCloseSettings">💾 บันทึก</button>
     </div>
   </div>
 
+  <!-- ประวัติ -->
   <div class="card">
     <div class="section-title">
-      <h3> ประวัติ</h3>
-      <button class="btn btn-secondary btn-icon" id="btnClearHistory" style="width: 32px; height: 32px; font-size: 0.8rem;">🗑</button>
+      <h3>📜 ประวัติ</h3>
+      <button class="btn btn-secondary btn-icon" id="btnClearHistory" style="width:32px;height:32px;font-size:0.8rem;">🗑</button>
     </div>
     <div class="history-list" id="historyList">
       <div class="history-empty">ยังไม่มีประวัติการบันทึก</div>
@@ -427,78 +367,90 @@
 
 <div class="bottom-bar">
   <button class="btn btn-primary btn-large" id="btnSaveSheets">📤 บันทึกลง Google Sheets</button>
-  <button class="btn btn-secondary btn-icon btn-large" id="btnSettings" style="flex: 0 0 56px;">⚙️</button>
+  <button class="btn btn-secondary btn-icon btn-large" id="btnSettings" style="flex:0 0 56px;">⚙️</button>
 </div>
 
 <script>
+/* ============================================================
+   CONFIG
+============================================================ */
 const CONFIG = {
   OCR_API_KEY: 'K89547989888957',
-  SHEETS_URL: 'https://script.google.com/macros/s/AKfycbz--nqIv3WPRVJ_2_92zWmP7cSzeiZMNoibdZ7eb-5RKAkDHcJwX0YvPVwEEmz8HzGtSA/exec',
-  SHEET_NAME: 'OCR_Records'
+  SHEETS_URL:  'https://script.google.com/macros/s/AKfycbz--nqIv3WPRVJ_2_92zWmP7cSzeiZMNoibdZ7eb-5RKAkDHcJwX0YvPVwEEmz8HzGtSA/exec',
+  SHEET_NAME:  'OCR_Records'
 };
 
-let currentStream = null;
-let currentFacingMode = 'environment';
-let capturedImageBlob = null;
-let capturedImageUrl = null;
+/* ============================================================
+   STATE
+============================================================ */
+let currentStream      = null;
+let currentFacingMode  = 'environment';
+let capturedImageBlob  = null;
+let capturedImageUrl   = null;
 
-const cameraContainer = document.getElementById('cameraContainer');
-const cameraPreview = document.getElementById('cameraPreview');
-const captureCanvas = document.getElementById('captureCanvas');
-const mainButtons = document.getElementById('mainButtons');
-const captureButtons = document.getElementById('captureButtons');
-const previewBox = document.getElementById('previewBox');
-const previewImg = document.getElementById('previewImg');
-const previewPlaceholder = document.getElementById('previewPlaceholder');
+/* ============================================================
+   DOM refs
+============================================================ */
+const $ = id => document.getElementById(id);
+const cameraWrapper      = $('cameraWrapper');
+const cameraPreview      = $('cameraPreview');
+const captureCanvas      = $('captureCanvas');
+const mainButtons        = $('mainButtons');
+const captureButtons     = $('captureButtons');
+const previewBox         = $('previewBox');
+const previewImg         = $('previewImg');
+const previewPlaceholder = $('previewPlaceholder');
+const statusBox          = $('statusBox');
+const cardFrameBox       = $('cardFrameBox');
 
-function showPreview(imageUrl) {
-  if (capturedImageUrl) {
-    URL.revokeObjectURL(capturedImageUrl);
-  }
-  capturedImageUrl = imageUrl;
-  previewImg.src = imageUrl;
+/* ============================================================
+   STATUS
+============================================================ */
+function setStatus(msg, type = 'loading') {
+  statusBox.textContent = msg;
+  statusBox.className = `status ${type}`;
+  if (type !== 'error') setTimeout(() => { statusBox.className = 'status'; }, 4000);
+}
+
+/* ============================================================
+   PREVIEW helpers
+============================================================ */
+function showPreview(url) {
+  if (capturedImageUrl) URL.revokeObjectURL(capturedImageUrl);
+  capturedImageUrl = url;
+  previewImg.src = url;
   previewImg.classList.add('active');
   previewPlaceholder.classList.add('hidden');
 }
-
 function hidePreview() {
-  if (capturedImageUrl) {
-    URL.revokeObjectURL(capturedImageUrl);
-    capturedImageUrl = null;
-  }
+  if (capturedImageUrl) { URL.revokeObjectURL(capturedImageUrl); capturedImageUrl = null; }
   previewImg.src = '';
   previewImg.classList.remove('active');
   previewPlaceholder.classList.remove('hidden');
 }
 
+/* ============================================================
+   CAMERA
+============================================================ */
 async function startCamera() {
   try {
-    if (currentStream) {
-      currentStream.getTracks().forEach(track => track.stop());
-    }
-    const constraints = {
+    if (currentStream) currentStream.getTracks().forEach(t => t.stop());
+    const stream = await navigator.mediaDevices.getUserMedia({
       video: { facingMode: currentFacingMode, width: { ideal: 1920 }, height: { ideal: 1080 } }
-    };
-    currentStream = await navigator.mediaDevices.getUserMedia(constraints);
-    cameraPreview.srcObject = currentStream;
-    cameraContainer.classList.add('active');
+    });
+    currentStream = stream;
+    cameraPreview.srcObject = stream;
+    cameraWrapper.classList.add('active');
     previewBox.style.display = 'none';
     mainButtons.classList.add('hidden');
-  } catch (err) {
+  } catch {
     setStatus('❌ ไม่สามารถเข้าถึงกล้องได้', 'error');
   }
 }
 
 function stopCamera() {
-  if (currentStream) {
-    currentStream.getTracks().forEach(track => track.stop());
-    currentStream = null;
-  }
-  cameraContainer.classList.remove('active');
-  if (!capturedImageBlob) {
-    previewBox.style.display = 'flex';
-    mainButtons.classList.remove('hidden');
-  }
+  if (currentStream) { currentStream.getTracks().forEach(t => t.stop()); currentStream = null; }
+  cameraWrapper.classList.remove('active');
 }
 
 function toggleCamera() {
@@ -506,292 +458,281 @@ function toggleCamera() {
   startCamera();
 }
 
+/* ============================================================
+   CAPTURE — crop เฉพาะบริเวณกรอบบัตร
+============================================================ */
 function captureImage() {
   if (!currentStream) return;
-  captureCanvas.width = cameraPreview.videoWidth;
-  captureCanvas.height = cameraPreview.videoHeight;
+
+  const vw = cameraPreview.videoWidth;
+  const vh = cameraPreview.videoHeight;
+
+  /* คำนวณ pixel ที่ตรงกับกรอบ card-frame-box บน element จริง */
+  const previewEl   = cameraPreview.getBoundingClientRect();
+  const frameEl     = cardFrameBox.getBoundingClientRect();
+
+  /* อัตราส่วน video จริง / element ที่แสดงบนหน้าจอ */
+  const scaleX = vw / previewEl.width;
+  const scaleY = vh / previewEl.height;
+
+  /* พิกัดกรอบในพื้นที่ video จริง */
+  const cropX = (frameEl.left - previewEl.left) * scaleX;
+  const cropY = (frameEl.top  - previewEl.top)  * scaleY;
+  const cropW = frameEl.width  * scaleX;
+  const cropH = frameEl.height * scaleY;
+
+  /* ขยาย margin เล็กน้อยเพื่อความปลอดภัย 4% */
+  const margin = 0.04;
+  const mx = cropW * margin;
+  const my = cropH * margin;
+  const sx = Math.max(0, cropX - mx);
+  const sy = Math.max(0, cropY - my);
+  const sw = Math.min(vw - sx, cropW + mx * 2);
+  const sh = Math.min(vh - sy, cropH + my * 2);
+
+  captureCanvas.width  = Math.round(sw);
+  captureCanvas.height = Math.round(sh);
   const ctx = captureCanvas.getContext('2d');
-  ctx.drawImage(cameraPreview, 0, 0);
-  captureCanvas.toBlob((blob) => {
+  ctx.drawImage(cameraPreview, sx, sy, sw, sh, 0, 0, sw, sh);
+
+  captureCanvas.toBlob(blob => {
     capturedImageBlob = blob;
     const url = URL.createObjectURL(blob);
     showPreview(url);
-    cameraContainer.classList.remove('active');
+    stopCamera();
     captureButtons.classList.remove('hidden');
     mainButtons.classList.add('hidden');
     previewBox.style.display = 'flex';
-    stopCamera();
-  }, 'image/jpeg', 0.9);
+  }, 'image/jpeg', 0.92);
 }
 
-function useCapturedImage() {
-  if (capturedImageBlob) handleFile(capturedImageBlob);
-}
-
-function retakePhoto() {
-  capturedImageBlob = null;
-  captureButtons.classList.add('hidden');
-  mainButtons.classList.remove('hidden');
-  hidePreview();
-  previewBox.style.display = 'flex';
-  startCamera();
-}
-
-function cancelCamera() {
+/* ============================================================
+   BUTTON EVENTS — camera
+============================================================ */
+$('btnCamera').addEventListener('click', startCamera);
+$('btnToggleCamera').addEventListener('click', toggleCamera);
+$('btnCapture').addEventListener('click', captureImage);
+$('btnCancelCamera').addEventListener('click', () => {
   capturedImageBlob = null;
   stopCamera();
   captureButtons.classList.add('hidden');
   mainButtons.classList.remove('hidden');
   hidePreview();
   previewBox.style.display = 'flex';
-  setStatus('');
+});
+$('btnRetake').addEventListener('click', () => {
+  capturedImageBlob = null;
+  captureButtons.classList.add('hidden');
+  mainButtons.classList.remove('hidden');
+  hidePreview();
+  previewBox.style.display = 'flex';
+  startCamera();
+});
+$('btnUsePhoto').addEventListener('click', () => {
+  if (capturedImageBlob) handleFile(capturedImageBlob);
+});
+$('btnReset').addEventListener('click', () => {
+  capturedImageBlob = null;
+  stopCamera();
+  captureButtons.classList.add('hidden');
+  mainButtons.classList.remove('hidden');
+  hidePreview();
+  previewBox.style.display = 'flex';
+});
+
+/* ============================================================
+   GALLERY
+============================================================ */
+$('galleryInput').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  capturedImageBlob = file;
+  const url = URL.createObjectURL(file);
+  showPreview(url);
+  mainButtons.classList.add('hidden');
+  captureButtons.classList.remove('hidden');
+  previewBox.style.display = 'flex';
+});
+$('btnGallery').addEventListener('click', () => $('galleryInput').click());
+
+/* ============================================================
+   IMAGE ENHANCEMENT
+============================================================ */
+function enhanceImage(imageFile) {
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx    = canvas.getContext('2d');
+        const maxDim = 1400;
+        let w = img.width, h = img.height;
+        if (w > maxDim || h > maxDim) {
+          const r = Math.min(maxDim / w, maxDim / h);
+          w = Math.round(w * r); h = Math.round(h * r);
+        }
+        canvas.width = w; canvas.height = h;
+        ctx.drawImage(img, 0, 0, w, h);
+        const imgData = ctx.getImageData(0, 0, w, h);
+        const d = imgData.data;
+        for (let i = 0; i < d.length; i += 4) {
+          const gray = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
+          const val  = Math.min(255, Math.max(0, ((gray - 128) * 1.4) + 128));
+          d[i] = d[i+1] = d[i+2] = val;
+        }
+        ctx.putImageData(imgData, 0, 0);
+        canvas.toBlob(resolve, 'image/jpeg', 0.88);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(imageFile);
+  });
 }
 
-document.getElementById('btnCamera').addEventListener('click', startCamera);
-document.getElementById('btnToggleCamera').addEventListener('click', toggleCamera);
-document.getElementById('btnCapture').addEventListener('click', captureImage);
-document.getElementById('btnCancelCamera').addEventListener('click', cancelCamera);
-document.getElementById('btnRetake').addEventListener('click', retakePhoto);
-document.getElementById('btnUsePhoto').addEventListener('click', useCapturedImage);
-document.getElementById('btnReset').addEventListener('click', cancelCamera);
+/* ============================================================
+   OCR PARSE
+============================================================ */
+function parseThaiID(ocrText) {
+  const lines = ocrText.split('\n').map(l => l.trim()).filter(Boolean);
+  let name = '', address = '', isAddr = false;
 
-const PREPROCESS = {
-  enhanceImage(imageFile) {
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          const maxDim = 1200;
-          let w = img.width, h = img.height;
-          if (w > maxDim || h > maxDim) {
-            const r = Math.min(maxDim / w, maxDim / h);
-            w = Math.round(w * r); h = Math.round(h * r);
-          }
-          canvas.width = w; canvas.height = h;
-          ctx.drawImage(img, 0, 0, w, h);
-          const imgData = ctx.getImageData(0, 0, w, h);
-          const data = imgData.data;
-          for (let i = 0; i < data.length; i += 4) {
-            const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-            const val = Math.min(255, Math.max(0, ((gray - 128) * 1.4) + 128));
-            data[i] = data[i + 1] = data[i + 2] = val;
-          }
-          ctx.putImageData(imgData, 0, 0);
-          canvas.toBlob(resolve, 'image/jpeg', 0.85);
-        };
-        img.src = e.target.result;
-      };
-      reader.readAsDataURL(imageFile);
-    });
-  },
+  const skipHeader = /Thai National ID Card|บัตรประจำตัวประชาชน|Identification Number/i;
+  const stopAddr   = /Date of Issue|วันออกบัตร|ลงชื่อ|Date of Expiry|วันหมดอายุ|วันที่ออก|Signature/i;
+  const dateFmt    = /\d{1,2}\s*[ก-ย]\.\s*\d{4}|\d{1,2}\s*[A-Za-z]+\.\s*\d{4}/;
+  const titleRE    = /นาย|นางสาว|นาง|น\.s\.?|ด\.ญ\.?|ด\.ช\.?|พระ|สามเณร|Miss|Mrs\.?|Mr\.?|Master/i;
+  const placeRE    = /ร้อย|ห้าง|ศูนย์การค้า|เซ็นทรัล|โลตัส|บิ๊กซี|ร้าน/i;
+  const namePfx    = /ชื่อตัวและชื่อสกุล|ชื่อ-สกุล|Name|ชื่อ|นาม/i;
 
-  parseThaiID(ocrText) {
-    const lines = ocrText.split('\n').map(l => l.trim()).filter(Boolean);
-    let name = '';
-    let address = '';
-    let isCapturingAddr = false;
-
-    const skipHeader = /Thai National ID Card|บัตรประจำตัวประชาชน|Identification Number/i;
-    const stopAddr = /Date of Issue|วันออกบัตร|ลงชื่อ|Date of Expiry|วันหมดอายุ|วันที่ออก|Signature/i;
-    const dateFmt = /\d{1,2}\s*[ก-ย]\.\s*\d{4}|\d{1,2}\s*[A-Za-z]+\.\s*\d{4}/;
-    const titleNames = /นาย|นางสาว|นาง|น\.s\.?|ด\.ญ\.?|ด\.ช\.?|พระ|สามเณร|Miss|Mrs\.?|Mr\.?|Master/i;
-    const placeNames = /ร้อย|ห้าง|ศูนย์การค้า|เซ็นทรัล|โลตัส|บิ๊กซี|ร้าน/i;
-    const namePrefixes = /ชื่อตัวและชื่อสกุล|ชื่อ-สกุล|Name|ชื่อ|นาม/i;
-
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      
-      if (skipHeader.test(line)) continue;
-
-      if (!name) {
-        if (titleNames.test(line) && line.length < 80) {
-          name = line.replace(namePrefixes, '').trim();
-        }
-        else if (namePrefixes.test(line)) {
-          if (/[ก-๙a-zA-Z]/.test(line) && !/Thai|National|Card|Identification/i.test(line)) {
-            name = line.replace(namePrefixes, '').trim();
-          }
-        }
-      }
-
-      if (line.includes('ที่อยู่') || line.includes('บ้านเลขที่')) {
-        isCapturingAddr = true;
-        address = line.replace(/ที่อยู่|บ้านเลขที่/gi, '').trim();
-        continue;
-      }
-
-      if (isCapturingAddr) {
-        if (stopAddr.test(line) || dateFmt.test(line)) {
-          isCapturingAddr = false; 
-        } 
-        else if (placeNames.test(line)) {
-          const splitAddr = line.split(/ร้อย|ห้าง|ศูนย์/)[0];
-          if(splitAddr.trim()) address += ' ' + splitAddr.trim();
-          isCapturingAddr = false;
-        }
-        else {
-          if (!/Name:|Last Name:|Date of Birth|Identification/i.test(line)) {
-            address += ' ' + line;
-          }
-        }
+  for (const line of lines) {
+    if (skipHeader.test(line)) continue;
+    if (!name) {
+      if (titleRE.test(line) && line.length < 80) name = line.replace(namePfx, '').trim();
+      else if (namePfx.test(line) && /[ก-๙a-zA-Z]/.test(line) && !/Thai|National|Card|Identification/i.test(line))
+        name = line.replace(namePfx, '').trim();
+    }
+    if (line.includes('ที่อยู่') || line.includes('บ้านเลขที่')) {
+      isAddr = true;
+      address = line.replace(/ที่อยู่|บ้านเลขที่/gi, '').trim();
+      continue;
+    }
+    if (isAddr) {
+      if (stopAddr.test(line) || dateFmt.test(line)) { isAddr = false; }
+      else if (placeRE.test(line)) {
+        const part = line.split(/ร้อย|ห้าง|ศูนย์/)[0];
+        if (part.trim()) address += ' ' + part.trim();
+        isAddr = false;
+      } else if (!/Name:|Last Name:|Date of Birth|Identification/i.test(line)) {
+        address += ' ' + line;
       }
     }
-
-    return {
-      name: name.replace(/\s+/g, ' ').trim(),
-      address: address.replace(/\s+/g, ' ').trim()
-    };
   }
-};
+  return { name: name.replace(/\s+/g,' ').trim(), address: address.replace(/\s+/g,' ').trim() };
+}
 
-const $ = (id) => document.getElementById(id);
-const statusBox = $('statusBox');
+/* ============================================================
+   HANDLE FILE → OCR
+============================================================ */
+async function handleFile(file) {
+  captureButtons.classList.add('hidden');
+  setStatus('🔍 กำลังวิเคราะห์บัตร...', 'loading');
+  try {
+    const key = localStorage.getItem('ocr_api_key') || $('apiKey').value.trim() || CONFIG.OCR_API_KEY;
+    const enhanced = await enhanceImage(file);
+    const form = new FormData();
+    form.append('file', enhanced, 'id_card.jpg');
+    form.append('apikey', key);
+    form.append('language', 'tha');
+    form.append('OCREngine', '2');
+    form.append('scale', 'true');
+    form.append('detectOrientation', 'true');
+    form.append('isOverlayRequired', 'false');
 
-function setStatus(msg, type = 'loading') {
-  statusBox.textContent = msg;
-  statusBox.className = `status ${type}`;
-  if (type === 'loading') {
-    setTimeout(() => { statusBox.className = 'status'; }, 5000);
+    const res  = await fetch('https://api.ocr.space/parse/image', { method: 'POST', body: form });
+    const data = await res.json();
+    if (data.OCRExitCode !== 1) throw new Error(data.ErrorMessage || 'OCR Failed');
+
+    const parsed = parseThaiID(data.ParsedResults[0].ParsedText);
+    $('fullName').value = parsed.name;
+    $('address').value  = parsed.address;
+    $('notes').value = $('workerCode').value = $('postalCode').value = $('phone').value = '';
+    $('quantity').value = 1;
+    setStatus('✅ สแกนสำเร็จ', 'success');
+  } catch (err) {
+    setStatus(`❌ ${err.message}`, 'error');
+    captureButtons.classList.remove('hidden');
   }
 }
 
+/* ============================================================
+   SETTINGS
+============================================================ */
 function loadSettings() {
-  $('apiKey').value = localStorage.getItem('ocr_api_key') || CONFIG.OCR_API_KEY;
-  $('sheetsUrl').value = localStorage.getItem('sheets_url') || CONFIG.SHEETS_URL;
-  $('sheetName').value = localStorage.getItem('sheet_name') || CONFIG.SHEET_NAME;
+  $('apiKey').value   = localStorage.getItem('ocr_api_key') || CONFIG.OCR_API_KEY;
+  $('sheetsUrl').value= localStorage.getItem('sheets_url')  || CONFIG.SHEETS_URL;
+  $('sheetName').value= localStorage.getItem('sheet_name')  || CONFIG.SHEET_NAME;
 }
 loadSettings();
 
 $('btnSettings').onclick = () => {
   $('settingsCard').classList.toggle('active');
-  if ($('settingsCard').classList.contains('active')) {
-    $('settingsCard').scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }
+  if ($('settingsCard').classList.contains('active'))
+    $('settingsCard').scrollIntoView({ behavior:'smooth', block:'center' });
 };
-
 $('btnCloseSettings').onclick = () => {
   localStorage.setItem('ocr_api_key', $('apiKey').value.trim());
-  localStorage.setItem('sheets_url', $('sheetsUrl').value.trim());
-  localStorage.setItem('sheet_name', $('sheetName').value.trim());
+  localStorage.setItem('sheets_url',  $('sheetsUrl').value.trim());
+  localStorage.setItem('sheet_name',  $('sheetName').value.trim());
   $('settingsCard').classList.remove('active');
   setStatus('✅ บันทึกการตั้งค่าแล้ว', 'success');
 };
-
 $('btnTestConn').onclick = async () => {
   const key = $('apiKey').value.trim() || CONFIG.OCR_API_KEY;
   if (!key) return setStatus('❌ กรุณากรอก API Key', 'error');
   setStatus('🔄 กำลังทดสอบ...', 'loading');
   try {
-    const res = await fetch('https://api.ocr.space/parse/image', {
-      method: 'POST',
-      headers: { 'apikey': key },
-      body: new URLSearchParams({ language: 'tha', OCREngine: '2', url: 'https://ocr.space/Content/Images/demo.jpg' })
+    const res  = await fetch('https://api.ocr.space/parse/image', {
+      method: 'POST', headers: { apikey: key },
+      body: new URLSearchParams({ language:'tha', OCREngine:'2', url:'https://ocr.space/Content/Images/demo.jpg' })
     });
     const data = await res.json();
-    if (data.OCRExitCode === 1) setStatus('✅ API Key ใช้งานได้', 'success');
-    else setStatus('❌ API Key ไม่ถูกต้อง', 'error');
+    setStatus(data.OCRExitCode === 1 ? '✅ API Key ใช้งานได้' : '❌ API Key ไม่ถูกต้อง', data.OCRExitCode === 1 ? 'success' : 'error');
   } catch { setStatus('❌ ไม่สามารถเชื่อมต่อได้', 'error'); }
 };
 
-$('galleryInput').addEventListener('change', (e) => {
-  const file = e.target.files[0];
-  if (file) {
-    capturedImageBlob = file;
-    const url = URL.createObjectURL(file);
-    showPreview(url);
-    mainButtons.classList.add('hidden');
-    captureButtons.classList.remove('hidden');
-    previewBox.style.display = 'flex';
-  }
-});
-
-$('btnGallery').onclick = () => $('galleryInput').click();
-
-async function handleFile(file) {
-  if (!file) return;
-  captureButtons.classList.add('hidden');
-  await runOCR(file);
-}
-
-async function runOCR(file) {
-  const key = localStorage.getItem('ocr_api_key') || $('apiKey').value.trim() || CONFIG.OCR_API_KEY;
-  
-  setStatus('🔍 กำลังวิเคราะห์บัตร...', 'loading');
-  try {
-    const enhancedBlob = await PREPROCESS.enhanceImage(file);
-    const formData = new FormData();
-    formData.append('file', enhancedBlob, 'id_card.jpg');
-    formData.append('apikey', key);
-    formData.append('language', 'tha');
-    formData.append('OCREngine', '2');
-    formData.append('scale', 'true');
-    formData.append('detectOrientation', 'true');
-    formData.append('isOverlayRequired', 'false');
-    
-    const res = await fetch('https://api.ocr.space/parse/image', { method: 'POST', body: formData });
-    const data = await res.json();
-    
-    if (data.OCRExitCode !== 1) throw new Error(data.ErrorMessage || 'OCR Failed');
-    
-    const parsed = PREPROCESS.parseThaiID(data.ParsedResults[0].ParsedText);
-    $('fullName').value = parsed.name;
-    $('address').value = parsed.address;
-    $('notes').value = '';
-    $('workerCode').value = '';
-    $('postalCode').value = '';
-    $('phone').value = '';
-    $('quantity').value = 1;
-
-    setStatus('✅ สแกนสำเร็จ', 'success');
-  } catch (err) {
-    setStatus(` ${err.message}`, 'error');
-  }
-}
-
+/* ============================================================
+   SAVE TO SHEETS
+============================================================ */
 $('btnSaveSheets').onclick = async () => {
   const url = localStorage.getItem('sheets_url') || $('sheetsUrl').value.trim() || CONFIG.SHEETS_URL;
-  
-  if (!url) {
-    return setStatus('⚠️ กรุณาตั้งค่า Google Sheets URL', 'error');
-  }
-  
+  if (!url) return setStatus('⚠️ กรุณาตั้งค่า Google Sheets URL', 'error');
   setStatus('📤 กำลังบันทึก...', 'loading');
-  
   const payload = {
-    action: 'insert',
-    sheet: localStorage.getItem('sheet_name') || $('sheetName').value.trim() || CONFIG.SHEET_NAME,
+    action:   'insert',
+    sheet:    localStorage.getItem('sheet_name') || $('sheetName').value.trim() || CONFIG.SHEET_NAME,
     fullname: $('fullName').value,
-    address: $('address').value,
-    note: $('notes').value,
+    address:  $('address').value,
+    note:     $('notes').value,
     assignee: $('workerCode').value,
     postcode: $('postalCode').value,
-    phone: $('phone').value,
-    qty: parseInt($('quantity').value) || 1,
-    time: new Date().toISOString(),
-    status: 'pending'
+    phone:    $('phone').value,
+    qty:      parseInt($('quantity').value) || 1,
+    time:     new Date().toISOString(),
+    status:   'pending'
   };
-  
   try {
-    await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      mode: 'no-cors',
-      body: JSON.stringify(payload)
-    });
-    
+    await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, mode:'no-cors', body: JSON.stringify(payload) });
     setStatus('✅ บันทึกสำเร็จ', 'success');
     addHistory(payload);
-    $('quantity').value = 1; 
-    $('notes').value = '';
-    
-  } catch (error) {
-    setStatus(`❌ บันทึกไม่สำเร็จ: ${error.message}`, 'error');
+    $('quantity').value = 1; $('notes').value = '';
+  } catch (err) {
+    setStatus(`❌ บันทึกไม่สำเร็จ: ${err.message}`, 'error');
   }
 };
 
+/* ============================================================
+   HISTORY
+============================================================ */
 function addHistory(data) {
   const list = $('historyList');
   if (list.querySelector('.history-empty')) list.innerHTML = '';
@@ -799,20 +740,21 @@ function addHistory(data) {
   item.className = 'history-item';
   item.innerHTML = `
     <div>
-      <div class="history-name">${data.fullname || '-'}</div>
-      <div class="history-addr">${(data.address || '').substring(0, 40)}...</div>
+      <div class="history-name">${data.fullname||'-'}</div>
+      <div class="history-addr">${(data.address||'').substring(0,40)}…</div>
     </div>
-    <div class="history-time">${new Date().toLocaleTimeString('th-TH', {hour: '2-digit', minute: '2-digit'})}</div>
-  `;
+    <div class="history-time">${new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})}</div>`;
   list.prepend(item);
 }
-
 $('btnClearHistory').onclick = () => {
   $('historyList').innerHTML = '<div class="history-empty">ยังไม่มีประวัติการบันทึก</div>';
 };
 
+/* ============================================================
+   CLEANUP
+============================================================ */
 window.addEventListener('beforeunload', () => {
-  if (currentStream) currentStream.getTracks().forEach(track => track.stop());
+  if (currentStream) currentStream.getTracks().forEach(t => t.stop());
   if (capturedImageUrl) URL.revokeObjectURL(capturedImageUrl);
 });
 </script>
