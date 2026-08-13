@@ -311,42 +311,57 @@ function QR8bitByte(t){this.mode=QRMode.MODE_8BIT_BYTE,this.data=t,this.parsedDa
                 <!-- Dropzone Area -->
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 lg:col-span-2 space-y-4">
                     <h3 class="text-lg font-bold text-slate-800">นำเข้าไฟล์ข้อมูลสลากประจำงวด (CSV / TSV)</h3>
-                    <p class="text-xs text-slate-500">รองรับไฟล์ CSV/TSV โดยคอลัมน์ <code class="font-mono bg-slate-100 px-1 py-0.5 rounded text-red-600 font-bold">amount</code> คือจำนวนเล่ม (ระบบแสดงเป็นกล่องอัตโนมัติ) และ 1 แถว/EMS คือ 1 กล่อง</p>
-                    
-                    <!-- Drag & Drop container -->
-                    <div id="dropzone" class="border-2 border-dashed border-slate-200 hover:border-red-400 hover:bg-red-50/30 transition-colors rounded-xl p-8 text-center cursor-pointer relative">
-                        <input type="file" id="csvFileInput" accept=".csv,.tsv,.txt" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
-                        <div class="space-y-3 pointer-events-none">
+                    <p class="text-xs text-slate-500">รองรับไฟล์ CSV/TSV โดยคอลัมน์ <code class="font-mono bg-slate-100 px-1 py-0.5 rounded text-red-600 font-bold">amount</code> คือจำนวนเล่ม และ 1 แถว/EMS คือ 1 กล่อง</p>
+
+                    <!-- hidden input — triggered by button/dropzone onclick -->
+                    <input type="file" id="csvFileInput"
+                           accept=".csv,.tsv,.txt,text/csv,text/plain,text/tab-separated-values,application/csv"
+                           class="hidden">
+                    <input type="file" id="csvFileInputAll" accept="*/*" class="hidden">
+
+                    <!-- Drag & Drop zone -->
+                    <div id="dropzone"
+                         onclick="document.getElementById('csvFileInput').click()"
+                         class="border-2 border-dashed border-slate-200 hover:border-red-400 hover:bg-red-50/30 transition-colors rounded-xl p-8 text-center cursor-pointer select-none">
+                        <div class="space-y-3">
                             <div class="bg-red-50 w-12 h-12 rounded-full flex items-center justify-center mx-auto text-red-600">
                                 <i data-lucide="upload-cloud" class="w-6 h-6"></i>
                             </div>
-                            <p class="text-sm font-semibold text-slate-700">คลิกเพื่อเลือกไฟล์ หรือลากและวางไฟล์ที่นี่</p>
-                            <p class="text-xs text-slate-400">รองรับไฟล์รหัสภาษาทั่วไป และไฟล์ TIS-620/Windows-874 ภาษาไทยดั้งเดิม</p>
+                            <p class="text-sm font-semibold text-slate-700">คลิกที่นี่เพื่อเลือกไฟล์ CSV</p>
+                            <p class="text-xs text-slate-400">หรือลากและวางไฟล์ได้เลย · รองรับ UTF-8 และ TIS-620/Windows-874</p>
                         </div>
                     </div>
 
-                    <div class="flex flex-wrap justify-between items-center gap-3 pt-2">
-                        <div class="flex items-center gap-4">
-                            <div class="flex items-center gap-2">
-                                <span class="inline-flex h-2.5 w-2.5 rounded-full bg-red-500 animate-pulse"></span>
-                                <span class="text-xs text-slate-500 font-medium" id="importStatusText">พร้อมสำหรับการนำเข้า</span>
-                            </div>
-                            <div class="flex items-center gap-1.5 border-l pl-4 border-slate-200">
-                                <label for="encodingSelect" class="text-xs font-semibold text-slate-600">รหัสภาษาไฟล์ (Encoding):</label>
-                                <select id="encodingSelect" class="border border-slate-200 bg-white rounded-lg px-2 py-1 text-xs focus:ring-1 focus:ring-red-500">
-                                    <option value="UTF-8">UTF-8 (ทั่วไป/สากล)</option>
-                                    <option value="windows-874">Windows-874 / TIS-620 (Excel ภาษาไทย)</option>
-                                </select>
-                            </div>
+                    <!-- ปุ่มสำรอง: เลือกทุกประเภท (สำหรับมือถือ/Android) -->
+                    <div class="flex gap-2">
+                        <button onclick="document.getElementById('csvFileInput').click()"
+                                class="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition active:scale-95">
+                            <i data-lucide="file-up" class="w-4 h-4"></i>
+                            เลือกไฟล์ CSV / TSV
+                        </button>
+                        <button onclick="document.getElementById('csvFileInputAll').click()"
+                                class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-semibold text-sm flex items-center gap-2 transition"
+                                title="สำหรับกรณีที่ปุ่มด้านซ้ายเลือกไฟล์ไม่ได้">
+                            <i data-lucide="folder-open" class="w-4 h-4"></i>
+                            ทุกประเภท
+                        </button>
+                    </div>
+
+                    <div class="flex flex-wrap justify-between items-center gap-3 pt-2 border-t border-slate-100">
+                        <div class="flex items-center gap-2">
+                            <span class="inline-flex h-2.5 w-2.5 rounded-full bg-red-500 animate-pulse"></span>
+                            <span class="text-xs text-slate-500 font-medium" id="importStatusText">พร้อมสำหรับการนำเข้า</span>
                         </div>
-                        <div class="flex gap-2">
-                            <button onclick="loadSampleData()" class="px-4 py-2 bg-red-50 text-red-700 hover:bg-red-100 transition rounded-xl text-xs font-semibold flex items-center gap-2">
-                                <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
-                                โหลดข้อมูลตัวอย่างสลากอัตโนมัติ (จากระบบดีลัง)
+                        <div class="flex flex-wrap gap-2">
+                            <select id="encodingSelect" class="border border-slate-200 bg-white rounded-lg px-2 py-1 text-xs focus:ring-1 focus:ring-red-500">
+                                <option value="UTF-8">UTF-8 (ทั่วไป)</option>
+                                <option value="windows-874">Windows-874 / TIS-620</option>
+                            </select>
+                            <button onclick="loadSampleData()" class="px-3 py-1.5 bg-red-50 text-red-700 hover:bg-red-100 transition rounded-lg text-xs font-semibold flex items-center gap-1.5">
+                                <i data-lucide="sparkles" class="w-3 h-3"></i> ตัวอย่าง
                             </button>
-                            <button onclick="clearAllData()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 transition rounded-xl text-xs font-semibold flex items-center gap-2">
-                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                                ล้างข้อมูลทั้งหมด
+                            <button onclick="clearAllData()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 transition rounded-lg text-xs font-semibold flex items-center gap-1.5">
+                                <i data-lucide="trash-2" class="w-3 h-3"></i> ล้างทั้งหมด
                             </button>
                         </div>
                     </div>
@@ -779,7 +794,7 @@ function QR8bitByte(t){this.mode=QRMode.MODE_8BIT_BYTE,this.data=t,this.parsedDa
                                     </button>
                                 </div>
                             </div>
-                            <div class="border border-slate-200 bg-slate-50 rounded-xl overflow-hidden relative" style="height: 200px;">
+                            <div class="border border-slate-200 bg-slate-50 rounded-xl overflow-hidden relative" style="height: 280px;">
                                 <canvas id="sigCanvas" class="w-full h-full cursor-crosshair block"></canvas>
                                 <button onclick="openFullscreenSignature()" class="absolute right-2 top-2 bg-white/80 p-2 rounded-lg hover:bg-white shadow-sm transition border border-slate-200">
                                     <i data-lucide="expand" class="w-4 h-4 text-slate-800"></i>
@@ -1415,24 +1430,36 @@ function QR8bitByte(t){this.mode=QRMode.MODE_8BIT_BYTE,this.data=t,this.parsedDa
         // DRAG AND DROP / CSV PARSING
         // ----------------------------------------
         function setupDragAndDrop() {
-            const dropzone = document.getElementById('dropzone');
-            const fileInput = document.getElementById('csvFileInput');
+            const dropzone     = document.getElementById('dropzone');
+            const fileInput    = document.getElementById('csvFileInput');
+            const fileInputAll = document.getElementById('csvFileInputAll');
 
+            // primary CSV input
             fileInput.addEventListener('change', (e) => {
                 if (e.target.files.length > 0) {
                     handleFile(e.target.files[0]);
+                    e.target.value = '';
                 }
             });
 
+            // fallback all-types input
+            if (fileInputAll) {
+                fileInputAll.addEventListener('change', (e) => {
+                    if (e.target.files.length > 0) {
+                        handleFile(e.target.files[0]);
+                        e.target.value = '';
+                    }
+                });
+            }
+
+            // drag-and-drop (desktop)
             dropzone.addEventListener('dragover', (e) => {
                 e.preventDefault();
                 dropzone.classList.add('border-red-500', 'bg-red-50/50');
             });
-
             dropzone.addEventListener('dragleave', () => {
                 dropzone.classList.remove('border-red-500', 'bg-red-50/50');
             });
-
             dropzone.addEventListener('drop', (e) => {
                 e.preventDefault();
                 dropzone.classList.remove('border-red-500', 'bg-red-50/50');
@@ -2433,12 +2460,24 @@ ${pagesHtml}
         }
 
         function renderCheckoutList(search = '') {
-            const list = state.recipients;
             const container = document.getElementById('checkoutListContainer');
+
+            // เรียงตามลำดับกล่องจาก sortingData — ถ้าไม่มีให้ใช้ลำดับเดิม
+            let list = [...state.recipients];
+            if (state.sortingData && state.sortingData.length > 0) {
+                list.sort((a, b) => {
+                    const orderA = getBoxOrder(a.id) || getBoxOrderForEms(a.ems) || 9999;
+                    const orderB = getBoxOrder(b.id) || getBoxOrderForEms(b.ems) || 9999;
+                    return orderA - orderB;
+                });
+            }
 
             let filtered = list;
             if (search) {
-                filtered = list.filter(r => r.fullName.toLowerCase().includes(search) || r.ems.toLowerCase().includes(search));
+                filtered = list.filter(r =>
+                    r.fullName.toLowerCase().includes(search) ||
+                    r.ems.toLowerCase().includes(search)
+                );
             }
 
             if (filtered.length === 0) {
@@ -2449,19 +2488,22 @@ ${pagesHtml}
             let html = '';
             filtered.forEach(r => {
                 const isSelected = state.selectedCheckoutId === r.id;
-                const statusDot = r.status === 'delivered' 
-                    ? '<span class="w-2.5 h-2.5 rounded-full bg-slate-900" title="จ่ายแล้ว"></span>' 
+                const statusDot = r.status === 'delivered'
+                    ? '<span class="w-2.5 h-2.5 rounded-full bg-slate-900" title="จ่ายแล้ว"></span>'
                     : '<span class="w-2.5 h-2.5 rounded-full bg-red-500" title="รอนำจ่าย"></span>';
-
-	                const cleanName = r.fullName.startsWith('=') ? r.fullName.substring(1).replace(/^"|"$/g, '') : r.fullName;
-	                html += `
-	                    <div onclick="selectForCheckout('${r.id}')" class="p-3.5 flex justify-between items-center cursor-pointer transition ${isSelected ? 'bg-red-50 border-l-4 border-red-600' : 'hover:bg-slate-50'}">
-	                        <div class="space-y-0.5">
-	                            <p class="font-bold text-xs text-slate-900">${cleanName}</p>
-	                            <p class="text-[10px] font-mono text-slate-400">${r.ems}</p>
-	                        </div>
-                        <div class="flex items-center gap-2">
-                            <span class="text-xs font-bold text-slate-700">${r._fromExcel ? `${r.amount} กล่อง` : `1 กล่อง<br/>(${r.amount} เล่ม)`}</span>
+                const cleanName = r.fullName.startsWith('=') ? r.fullName.substring(1).replace(/^"|"$/g, '') : r.fullName;
+                const boxOrder = getBoxOrder(r.id) || getBoxOrderForEms(r.ems) || '';
+                const boxBadge = boxOrder
+                    ? `<span class="text-[10px] font-bold text-white bg-red-600 rounded px-1.5 py-0.5 mr-1">#${boxOrder}</span>`
+                    : '';
+                html += `
+                    <div onclick="selectForCheckout('${r.id}')" class="p-3.5 flex justify-between items-center cursor-pointer transition ${isSelected ? 'bg-red-50 border-l-4 border-red-600' : 'hover:bg-slate-50'}">
+                        <div class="space-y-0.5 flex-1 min-w-0">
+                            <p class="font-bold text-xs text-slate-900">${boxBadge}${cleanName}</p>
+                            <p class="text-[10px] font-mono text-slate-400">${r.ems}</p>
+                        </div>
+                        <div class="flex items-center gap-2 flex-shrink-0">
+                            <span class="text-xs font-bold text-slate-700">${r._fromExcel ? `${r.amount} กล่อง` : `1 กล่อง`}</span>
                             ${statusDot}
                         </div>
                     </div>
