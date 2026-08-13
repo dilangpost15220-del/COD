@@ -1877,7 +1877,7 @@ function QR8bitByte(t){this.mode=QRMode.MODE_8BIT_BYTE,this.data=t,this.parsedDa
 	                                ลำดับจุดจ่าย : ${idx + 1} &nbsp; ผู้รับ ${cleanName}
 	                            </div>
                             <div style="line-height:1; margin:3px 0;">${generateBarcodeSVG(r.ems)}</div>
-                            <div style="font-family:monospace; font-size:10px; margin-top:1px; letter-spacing:1px;">${r.ems}</div>
+                            <div style="font-family:monospace; font-size:13px; font-weight:bold; margin-top:2px; letter-spacing:1.5px;">${r.ems}</div>
                             <div style="font-size:10px; color:#444; margin-top:2px;">ที่อยู่ &nbsp; รหัสไปรษณีย์ ${r.postcode} &nbsp; ${r.postname}</div>
                             <div style="font-size:10px; color:#b91c1c; font-weight:bold; margin-top:2px;">จำนวนสลาก: ${r._fromExcel ? `${r.amount} กล่อง` : `1 กล่อง (${r.amount} เล่ม)`}</div>
                         </div>
