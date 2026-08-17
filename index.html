@@ -757,10 +757,16 @@ function QR8bitByte(t){this.mode=QRMode.MODE_8BIT_BYTE,this.data=t,this.parsedDa
                             <div class="space-y-1">
                                 <div class="flex justify-between items-end">
                                     <label for="receiverIdCard" class="text-xs font-semibold text-slate-500">หมายเลขบัตรประชาชนผู้รับ (13 หลัก)</label>
-                                    <button onclick="readIdCard()" class="text-[10px] font-bold text-red-600 hover:text-red-700 flex items-center gap-1 bg-red-50 px-2 py-1 rounded-lg border border-red-100 transition mb-1">
-                                        <i data-lucide="contact-2" class="w-3 h-3"></i>
-                                        เสียบบัตรประชาชน
-                                    </button>
+                                    <div class="flex gap-1.5 mb-1">
+                                        <button onclick="readIdCard()" class="text-[10px] font-bold text-red-600 hover:text-red-700 flex items-center gap-1 bg-red-50 px-2 py-1 rounded-lg border border-red-100 transition">
+                                            <i data-lucide="contact-2" class="w-3 h-3"></i>
+                                            เสียบบัตรประชาชน
+                                        </button>
+                                        <button onclick="openIdCardScanner()" class="text-[10px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 bg-blue-50 px-2 py-1 rounded-lg border border-blue-100 transition">
+                                            <i data-lucide="camera" class="w-3 h-3"></i>
+                                            สแกนด้วยกล้อง
+                                        </button>
+                                    </div>
                                 </div>
                                 <div class="relative">
                                     <input type="text" id="receiverIdCard" maxlength="17" placeholder="X-XXXX-XXXXX-XX-X" oninput="autoFormatThaiID(this)"
@@ -895,6 +901,34 @@ function QR8bitByte(t){this.mode=QRMode.MODE_8BIT_BYTE,this.data=t,this.parsedDa
                 </button>
             </div>
         </div>
+    </div>
+
+    <!-- ID Card Camera Scanner Modal -->
+    <div id="idCardScanModal" class="fixed inset-0 bg-black/90 z-[105] hidden flex flex-col items-center justify-center p-4">
+        <button onclick="closeIdCardScanner()" class="absolute top-4 right-4 bg-slate-800 text-slate-300 hover:text-white p-2 rounded-xl border border-slate-700 transition">
+            <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+        <div class="relative w-full max-w-md">
+            <video id="idScanVideo" autoplay playsinline muted class="w-full rounded-2xl bg-black block"></video>
+            <div id="idScanOverlay" class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div class="border-[3px] border-red-500 rounded-lg" style="width:88%; aspect-ratio: 85.6 / 54; box-shadow: 0 0 0 999px rgba(0,0,0,0.55);"></div>
+            </div>
+        </div>
+        <p class="text-white text-xs text-center mt-3 max-w-xs">วางบัตรประชาชนให้อยู่ในกรอบสีแดงให้พอดี ให้แสงสว่างเพียงพอ แล้วกดถ่ายภาพ</p>
+        <div class="flex gap-3 mt-4">
+            <button id="btnCaptureIdCard" onclick="captureIdCardPhoto()" class="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 shadow-lg transition">
+                <i data-lucide="camera" class="w-4 h-4"></i>
+                ถ่ายภาพและอ่านเลขบัตร
+            </button>
+            <button onclick="closeIdCardScanner()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-5 py-2.5 rounded-xl text-sm font-bold transition">
+                ยกเลิก
+            </button>
+        </div>
+        <div id="idScanProgress" class="hidden text-white text-xs mt-4 flex items-center gap-2">
+            <div class="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            <span id="idScanProgressText">กำลังอ่านตัวเลขบัตรประชาชน...</span>
+        </div>
+        <canvas id="idScanCanvas" class="hidden"></canvas>
     </div>
 
     <!-- Custom Dialog Confirmation Modal (Replaces browser confirm()) -->
@@ -2282,7 +2316,7 @@ ${pagesHtml}
             ctx.scale(dpr, dpr);
             
             ctx.strokeStyle = '#e11d48'; // crimson red
-            ctx.lineWidth = 3;
+            ctx.lineWidth = 5;
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
 
@@ -2372,7 +2406,7 @@ ${pagesHtml}
             fsCanvas.height = h;
             // Re-apply stroke style after resize (resize resets context)
             fsCtx.strokeStyle = '#e11d48';
-            fsCtx.lineWidth = 5;
+            fsCtx.lineWidth = 7;
             fsCtx.lineCap = 'round';
             fsCtx.lineJoin = 'round';
         }
@@ -2844,6 +2878,173 @@ ${pagesHtml}
                 showToast('ไม่พบเครื่องอ่านบัตรหรือบัตรขัดข้อง', 'error');
             } finally {
                 status.classList.add('hidden');
+            }
+        }
+
+        // ----------------------------------------
+        // ----------------------------------------
+        // CAMERA OCR ID CARD SCANNER
+        // ----------------------------------------
+        let _idScanStream = null;
+
+        async function openIdCardScanner() {
+            const modal = document.getElementById('idCardScanModal');
+            const video = document.getElementById('idScanVideo');
+
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                showToast('อุปกรณ์นี้ไม่รองรับการเปิดกล้อง', 'error');
+                return;
+            }
+
+            modal.classList.remove('hidden');
+            if (window.lucide) lucide.createIcons();
+
+            try {
+                _idScanStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } },
+                    audio: false
+                });
+                video.srcObject = _idScanStream;
+            } catch (err) {
+                console.error('Camera error:', err);
+                showToast('ไม่สามารถเปิดกล้องได้ กรุณาอนุญาตการใช้งานกล้อง', 'error');
+                closeIdCardScanner();
+            }
+        }
+
+        function closeIdCardScanner() {
+            const modal = document.getElementById('idCardScanModal');
+            const video = document.getElementById('idScanVideo');
+
+            if (_idScanStream) {
+                _idScanStream.getTracks().forEach(t => t.stop());
+                _idScanStream = null;
+            }
+            video.srcObject = null;
+            modal.classList.add('hidden');
+            document.getElementById('idScanProgress').classList.add('hidden');
+        }
+
+        // OCR.space free-tier public key
+        const OCR_SPACE_API_KEY = 'K89547989888957';
+        const OCR_SPACE_ENDPOINT = 'https://api.ocr.space/parse/image';
+
+        // Basic client-side image cleanup before sending to OCR.space:
+        // downscale (keeps upload small/fast within free-tier limits) + contrast/brightness boost
+        // to help with glossy or dim-lit ID card photos.
+        const PREPROCESS = {
+            enhanceImage(sourceCanvas, maxDim = 1000) {
+                const { width, height } = sourceCanvas;
+                const scale = Math.min(1, maxDim / Math.max(width, height));
+                const outW = Math.max(1, Math.round(width * scale));
+                const outH = Math.max(1, Math.round(height * scale));
+
+                const outCanvas = document.createElement('canvas');
+                outCanvas.width = outW;
+                outCanvas.height = outH;
+                const ctx = outCanvas.getContext('2d');
+                ctx.drawImage(sourceCanvas, 0, 0, outW, outH);
+
+                const imgData = ctx.getImageData(0, 0, outW, outH);
+                const data = imgData.data;
+                const contrast = 1.25;
+                const brightness = 10;
+                for (let i = 0; i < data.length; i += 4) {
+                    for (let c = 0; c < 3; c++) {
+                        let v = (data[i + c] - 128) * contrast + 128 + brightness;
+                        data[i + c] = Math.max(0, Math.min(255, v));
+                    }
+                }
+                ctx.putImageData(imgData, 0, 0);
+                return outCanvas;
+            }
+        };
+
+        // Extract the 13-digit Thai national ID number from OCR.space's parsed text
+        function parseThaiID(parsedText) {
+            const digitsOnly = (parsedText || '').replace(/\D/g, '');
+            const match13 = digitsOnly.match(/\d{13}/);
+            if (match13) return match13[0];
+            return digitsOnly.length >= 13 ? digitsOnly.slice(0, 13) : '';
+        }
+
+        async function ocrSpaceRecognize(canvas) {
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+            const formData = new FormData();
+            formData.append('apikey', OCR_SPACE_API_KEY);
+            formData.append('language', 'tha');
+            formData.append('OCREngine', '2');
+            formData.append('scale', 'true');
+            formData.append('base64Image', dataUrl);
+
+            const resp = await fetch(OCR_SPACE_ENDPOINT, { method: 'POST', body: formData });
+            if (!resp.ok) throw new Error(`OCR.space HTTP ${resp.status}`);
+            const json = await resp.json();
+
+            if (json.IsErroredOnProcessing) {
+                const msg = Array.isArray(json.ErrorMessage) ? json.ErrorMessage.join(', ') : (json.ErrorMessage || 'OCR processing error');
+                throw new Error(msg);
+            }
+            return (json.ParsedResults && json.ParsedResults[0] && json.ParsedResults[0].ParsedText) || '';
+        }
+
+        async function captureIdCardPhoto() {
+            const video = document.getElementById('idScanVideo');
+            const overlayBox = document.querySelector('#idScanOverlay > div');
+            const canvas = document.getElementById('idScanCanvas');
+            const progress = document.getElementById('idScanProgress');
+            const progressText = document.getElementById('idScanProgressText');
+            const btn = document.getElementById('btnCaptureIdCard');
+
+            if (!video.videoWidth) {
+                showToast('กล้องยังไม่พร้อม กรุณารอสักครู่แล้วลองใหม่', 'error');
+                return;
+            }
+
+            // Map the on-screen guide frame to actual video pixel coordinates,
+            // so OCR only receives the cropped card region, not the whole frame.
+            const videoRect = video.getBoundingClientRect();
+            const boxRect = overlayBox.getBoundingClientRect();
+            const scaleX = video.videoWidth / videoRect.width;
+            const scaleY = video.videoHeight / videoRect.height;
+
+            const cropX = (boxRect.left - videoRect.left) * scaleX;
+            const cropY = (boxRect.top - videoRect.top) * scaleY;
+            const cropW = boxRect.width * scaleX;
+            const cropH = boxRect.height * scaleY;
+
+            canvas.width = cropW;
+            canvas.height = cropH;
+            canvas.getContext('2d').drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+
+            btn.disabled = true;
+            progress.classList.remove('hidden');
+            progressText.textContent = 'กำลังส่งภาพไปประมวลผล...';
+
+            try {
+                const enhancedCanvas = PREPROCESS.enhanceImage(canvas);
+                progressText.textContent = 'กำลังอ่านตัวเลขบัตรประชาชน...';
+
+                const parsedText = await ocrSpaceRecognize(enhancedCanvas);
+                const idNumber = parseThaiID(parsedText);
+
+                if (idNumber.length !== 13) {
+                    showToast('อ่านเลขบัตรไม่ชัดเจน กรุณาจัดบัตรให้อยู่ในกรอบและถ่ายใหม่', 'error');
+                    return;
+                }
+
+                const input = document.getElementById('receiverIdCard');
+                input.value = idNumber;
+                autoFormatThaiID(input);
+                showToast('อ่านเลขบัตรประชาชนจากกล้องสำเร็จ กรุณาตรวจสอบความถูกต้อง', 'success');
+                closeIdCardScanner();
+
+            } catch (err) {
+                console.error('OCR.space error:', err);
+                showToast('ไม่สามารถอ่านข้อมูลจากภาพได้ กรุณาลองใหม่อีกครั้ง', 'error');
+            } finally {
+                btn.disabled = false;
+                progress.classList.add('hidden');
             }
         }
 
