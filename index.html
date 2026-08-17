@@ -503,11 +503,11 @@ function QR8bitByte(t){this.mode=QRMode.MODE_8BIT_BYTE,this.data=t,this.parsedDa
                             <i data-lucide="download" class="w-3.5 h-3.5"></i>
                             สำรองไฟล์จัดลำดับ
                         </button>
-                        <label class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 transition rounded-xl text-xs font-semibold flex items-center gap-2 cursor-pointer">
+                        <button onclick="openSortingFilePicker()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 transition rounded-xl text-xs font-semibold flex items-center gap-2">
                             <i data-lucide="upload" class="w-3.5 h-3.5"></i>
                             นำเข้าไฟล์จัดลำดับ
-                            <input type="file" accept=".json" class="hidden" onchange="importSortingFile(event)">
-                        </label>
+                        </button>
+                        <input id="sortingFileInput" type="file" accept=".json" class="hidden" onchange="importSortingFile(event)">
                         <button onclick="clearSortingData()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 transition rounded-xl text-xs font-semibold flex items-center gap-2">
                             <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                             ล้างข้อมูล
@@ -3616,7 +3616,7 @@ ${pagesHtml}
         // ----------------------------------------
         // SORTING DATA BACKUP / IMPORT
         // ----------------------------------------
-        function exportSortingFile() {
+        async function exportSortingFile() {
             if (!state.sortingData || state.sortingData.length === 0) {
                 showToast('ไม่มีข้อมูลจัดลำดับกล่องให้สำรอง', 'error');
                 return;
@@ -3628,11 +3628,36 @@ ${pagesHtml}
                 timestamp: new Date().toISOString(),
                 sortingData: state.sortingData
             };
-            const blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' });
+            const jsonText = JSON.stringify(obj, null, 2);
+            const suggestedName = `sorting_backup_${state.settings.drawDate.replace(/\s+/g, '_')}.json`;
+
+            // Prefer the File System Access API so the user can pick exactly where to save.
+            if (window.showSaveFilePicker) {
+                try {
+                    const handle = await window.showSaveFilePicker({
+                        suggestedName,
+                        types: [{
+                            description: 'JSON file',
+                            accept: { 'application/json': ['.json'] }
+                        }]
+                    });
+                    const writable = await handle.createWritable();
+                    await writable.write(jsonText);
+                    await writable.close();
+                    showToast('บันทึกไฟล์สำรองจัดลำดับกล่องเรียบร้อยแล้ว', 'success');
+                    return;
+                } catch (err) {
+                    if (err && err.name === 'AbortError') return; // user cancelled the picker
+                    console.warn('showSaveFilePicker failed, falling back to download:', err);
+                }
+            }
+
+            // Fallback for browsers without File System Access API (Firefox, Safari, non-HTTPS)
+            const blob = new Blob([jsonText], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `sorting_backup_${state.settings.drawDate.replace(/\s+/g, '_')}.json`;
+            a.download = suggestedName;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -3640,9 +3665,38 @@ ${pagesHtml}
             showToast('ดาวน์โหลดไฟล์สำรองจัดลำดับกล่องเรียบร้อยแล้ว', 'success');
         }
 
+        async function openSortingFilePicker() {
+            // Prefer the File System Access API so the user can browse to any location/drive.
+            if (window.showOpenFilePicker) {
+                try {
+                    const [handle] = await window.showOpenFilePicker({
+                        types: [{
+                            description: 'JSON file',
+                            accept: { 'application/json': ['.json'] }
+                        }],
+                        excludeAcceptAllOption: false,
+                        multiple: false
+                    });
+                    const file = await handle.getFile();
+                    processSortingFile(file);
+                    return;
+                } catch (err) {
+                    if (err && err.name === 'AbortError') return; // user cancelled the picker
+                    console.warn('showOpenFilePicker failed, falling back to file input:', err);
+                }
+            }
+            // Fallback: trigger the hidden native <input type="file"> picker
+            document.getElementById('sortingFileInput').click();
+        }
+
         function importSortingFile(event) {
             const file = event.target.files[0];
             if (!file) return;
+            processSortingFile(file);
+            event.target.value = '';
+        }
+
+        function processSortingFile(file) {
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
@@ -3667,7 +3721,6 @@ ${pagesHtml}
                 }
             };
             reader.readAsText(file);
-            event.target.value = '';
         }
 
     </script>
