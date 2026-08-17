@@ -81,6 +81,27 @@ function QR8bitByte(t){this.mode=QRMode.MODE_8BIT_BYTE,this.data=t,this.parsedDa
         .no-scroll {
             overflow: hidden;
         }
+
+        /* Fullscreen signature modal: encourage/force landscape on phones for a wider signing area */
+        #fsRotateHint { display: none; }
+        @media (max-width: 768px) and (orientation: portrait) {
+            #fullscreenSigModal.sig-modal-open #fsRotateHint {
+                display: flex;
+            }
+            /* Native Screen Orientation lock is unreliable across browsers (unsupported on
+               iOS Safari, desktop, and many Android configurations), so when the device is
+               still physically in portrait we visually rotate just the drawing area 90°
+               to give a wide landscape canvas without relying on that API. */
+            #fsSigCanvasWrap.fs-canvas-rotated {
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                margin: 0 !important;
+                transform: translate(-50%, -50%) rotate(90deg);
+                transform-origin: center center;
+                z-index: 20;
+            }
+        }
     </style>
 </head>
 <body class="text-slate-900 antialiased min-h-screen flex flex-col">
@@ -876,8 +897,14 @@ function QR8bitByte(t){this.mode=QRMode.MODE_8BIT_BYTE,this.data=t,this.parsedDa
             </button>
         </div>
 
+        <!-- Rotate-to-landscape hint (shown automatically on phones held in portrait) -->
+        <div id="fsRotateHint" class="items-center justify-center gap-3 bg-amber-500/15 border border-amber-400/40 text-amber-300 text-xs md:text-sm font-bold rounded-xl py-2.5 px-3 mt-3 animate-pulse">
+            <i data-lucide="rotate-cw" class="w-5 h-5 shrink-0"></i>
+            <span>หมุนเครื่องจริงเพื่อประสบการณ์เต็มจอที่ดีที่สุด (พื้นที่เซ็นชื่อขยายให้อัตโนมัติแล้ว)</span>
+        </div>
+
         <!-- Giant Canvas Container — white background, red ink -->
-        <div class="flex-1 my-4 bg-white border-2 border-slate-300 rounded-2xl relative overflow-hidden">
+        <div id="fsSigCanvasWrap" class="flex-1 my-4 bg-white border-2 border-slate-300 rounded-2xl relative overflow-hidden">
             <canvas id="fsSigCanvas" class="w-full h-full cursor-crosshair block"></canvas>
             <div id="fsSigHint" class="absolute inset-0 pointer-events-none flex flex-col items-center justify-center text-center">
                 <i data-lucide="pencil-line" class="w-16 h-16 text-slate-200"></i>
@@ -2360,14 +2387,14 @@ ${pagesHtml}
                 isFsDrawing = true;
                 const hint = document.getElementById('fsSigHint');
                 if (hint) hint.style.display = 'none';
-                const rect = fsCanvas.getBoundingClientRect();
+                const p = getFsPointerPos(e.clientX, e.clientY);
                 fsCtx.beginPath();
-                fsCtx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+                fsCtx.moveTo(p.x, p.y);
             });
             fsCanvas.addEventListener('mousemove', (e) => {
                 if (!isFsDrawing) return;
-                const rect = fsCanvas.getBoundingClientRect();
-                fsCtx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+                const p = getFsPointerPos(e.clientX, e.clientY);
+                fsCtx.lineTo(p.x, p.y);
                 fsCtx.stroke();
             });
             fsCanvas.addEventListener('mouseup', () => { isFsDrawing = false; });
@@ -2377,24 +2404,38 @@ ${pagesHtml}
             fsCanvas.addEventListener('touchstart', (e) => {
                 e.preventDefault();
                 const touch = e.touches[0];
-                const rect = fsCanvas.getBoundingClientRect();
                 isFsDrawing = true;
                 const hint = document.getElementById('fsSigHint');
                 if (hint) hint.style.display = 'none';
+                const p = getFsPointerPos(touch.clientX, touch.clientY);
                 fsCtx.beginPath();
-                fsCtx.moveTo(touch.clientX - rect.left, touch.clientY - rect.top);
+                fsCtx.moveTo(p.x, p.y);
             });
 
             fsCanvas.addEventListener('touchmove', (e) => {
                 e.preventDefault();
                 if (!isFsDrawing) return;
                 const touch = e.touches[0];
-                const rect = fsCanvas.getBoundingClientRect();
-                fsCtx.lineTo(touch.clientX - rect.left, touch.clientY - rect.top);
+                const p = getFsPointerPos(touch.clientX, touch.clientY);
+                fsCtx.lineTo(p.x, p.y);
                 fsCtx.stroke();
             });
 
             fsCanvas.addEventListener('touchend', () => { isFsDrawing = false; });
+        }
+
+        // Maps a raw pointer position (clientX/clientY) to the canvas's own drawing
+        // coordinate system. When fsForceRotate is active the canvas is visually rotated
+        // 90° via CSS (see .fs-canvas-rotated), so on-screen coordinates need to be
+        // rotated back into the canvas's un-rotated local space.
+        function getFsPointerPos(clientX, clientY) {
+            const rect = fsCanvas.getBoundingClientRect();
+            const relX = clientX - rect.left;
+            const relY = clientY - rect.top;
+            if (fsForceRotate) {
+                return { x: relY, y: rect.width - relX };
+            }
+            return { x: relX, y: relY };
         }
 
         function resizeFullscreenCanvas() {
@@ -2413,6 +2454,9 @@ ${pagesHtml}
 
         // Holds last fullscreen sig dataURL captured before modal hides
         let _fsSigDataURL = null;
+        // True when the drawing canvas is being visually rotated 90° via CSS because
+        // the device is still physically in portrait (native orientation lock unavailable/unsupported)
+        let fsForceRotate = false;
 
         function openFullscreenSignature() {
             if (!state.selectedCheckoutId) {
@@ -2427,11 +2471,94 @@ ${pagesHtml}
             document.getElementById('fsTargetName').innerText = item.fullName;
             const fsModal = document.getElementById('fullscreenSigModal');
             fsModal.classList.remove('hidden');
+            fsModal.classList.add('sig-modal-open');
             document.body.classList.add('no-scroll');
+            if (window.lucide) lucide.createIcons();
 
-            // Resize after layout settles (changing .width clears canvas automatically)
-            setTimeout(() => resizeFullscreenCanvas(), 120);
+            // Try to lock the screen to landscape for a wider signing area on phones.
+            // Only works on some Android browsers (needs fullscreen first); it's a bonus —
+            // updateFsRotationMode() below guarantees a wide canvas either way.
+            lockLandscapeOrientation();
+
+            // Resize/rotation-check after layout settles (changing .width clears canvas automatically)
+            setTimeout(() => {
+                updateFsRotationMode();
+                resizeFullscreenCanvas();
+            }, 150);
         }
+
+        // Guarantees a wide signing area on phones even when the native Screen Orientation
+        // lock isn't supported (iOS Safari, desktop, many Android setups): if the device is
+        // still physically in portrait, visually rotate the canvas 90° via CSS instead.
+        function updateFsRotationMode() {
+            const wrap = document.getElementById('fsSigCanvasWrap');
+            if (!wrap) return;
+
+            const isPortraitNow = window.matchMedia('(orientation: portrait)').matches;
+            const isPhoneWidth = window.innerWidth <= 768;
+            fsForceRotate = isPortraitNow && isPhoneWidth;
+
+            if (fsForceRotate) {
+                wrap.classList.add('fs-canvas-rotated');
+                // Unrotated CSS box; after rotate(90deg) width/height swap on screen,
+                // so this yields an on-screen box ~94% of viewport width x ~56% of viewport height.
+                wrap.style.width = Math.round(window.innerHeight * 0.56) + 'px';
+                wrap.style.height = Math.round(window.innerWidth * 0.94) + 'px';
+            } else {
+                wrap.classList.remove('fs-canvas-rotated');
+                wrap.style.width = '';
+                wrap.style.height = '';
+            }
+        }
+
+        async function lockLandscapeOrientation() {
+            try {
+                if (document.documentElement.requestFullscreen && !document.fullscreenElement) {
+                    await document.documentElement.requestFullscreen();
+                }
+                if (screen.orientation && screen.orientation.lock) {
+                    await screen.orientation.lock('landscape');
+                }
+            } catch (e) {
+                // Orientation lock not supported/allowed — user can rotate manually,
+                // the on-screen hint banner will show while in portrait.
+            }
+        }
+
+        function unlockOrientation() {
+            try {
+                if (screen.orientation && screen.orientation.unlock) {
+                    screen.orientation.unlock();
+                }
+                if (document.fullscreenElement && document.exitFullscreen) {
+                    document.exitFullscreen().catch(() => {});
+                }
+            } catch (e) { /* ignore */ }
+        }
+
+        // Preserve the in-progress signature across a manual device rotation
+        // (resizing the canvas normally clears it, so we snapshot + redraw).
+        window.addEventListener('orientationchange', () => {
+            const fsModal = document.getElementById('fullscreenSigModal');
+            if (!fsModal || fsModal.classList.contains('hidden') || !fsCanvas) return;
+
+            let preserved = null;
+            try { preserved = fsCanvas.toDataURL('image/png'); } catch (e) { /* ignore */ }
+
+            setTimeout(() => {
+                updateFsRotationMode();
+                resizeFullscreenCanvas();
+                if (preserved) {
+                    const img = new Image();
+                    img.onload = () => {
+                        fsCtx.drawImage(img, 0, 0, fsCanvas.width, fsCanvas.height);
+                        const hint = document.getElementById('fsSigHint');
+                        if (hint) hint.style.display = 'none';
+                    };
+                    img.src = preserved;
+                }
+            }, 200);
+        });
 
         function closeFullscreenSignature(shouldSave) {
             if (shouldSave) {
@@ -2444,7 +2571,17 @@ ${pagesHtml}
             }
 
             document.getElementById('fullscreenSigModal').classList.add('hidden');
+            document.getElementById('fullscreenSigModal').classList.remove('sig-modal-open');
             document.body.classList.remove('no-scroll');
+            unlockOrientation();
+
+            const wrap = document.getElementById('fsSigCanvasWrap');
+            if (wrap) {
+                wrap.classList.remove('fs-canvas-rotated');
+                wrap.style.width = '';
+                wrap.style.height = '';
+            }
+            fsForceRotate = false;
 
             if (shouldSave && _fsSigDataURL) {
                 const img = new Image();
